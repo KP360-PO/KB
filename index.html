@@ -1,0 +1,437 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1.0">
+  <title>PO Knowledge Base</title>
+  <style>
+    :root{--primary:#333;--accent:#ffb900;--text:#4a4a4a;--bg:#f5f5f5;--header-height:60px}
+    *,*::before,*::after{box-sizing:border-box}
+    body{margin:0;padding:0;font-family:'Segoe UI',Tahoma,sans-serif;background:var(--bg);color:var(--text)}
+    header{position:fixed;top:0;left:0;right:0;height:var(--header-height);background:#fff;border-bottom:1px solid #ddd;display:flex;align-items:center;padding:0 1rem;z-index:1000}
+    header img{height:16px;margin-right:1rem}
+    header h1{margin:0;font-size:1.25rem;color:var(--primary);flex:1;text-align:center}
+    .search-wrapper{position:relative;margin-left:auto}
+    #searchInput{padding:.5rem;font-size:1rem;border:1px solid #ccc;border-radius:4px;width:200px}
+    #searchResults{position:absolute;top:110%;left:0;right:0;background:#fff;border:1px solid #ccc;border-radius:4px;list-style:none;margin:0;padding:0;max-height:250px;overflow-y:auto;z-index:1001}
+    #searchResults li{padding:.5rem;cursor:pointer}
+    #searchResults li:hover{background:var(--bg)}
+    nav{position:fixed;top:var(--header-height);left:0;bottom:0;width:220px;background:var(--primary);padding:1rem;overflow-y:auto}
+    nav h3{color:var(--accent);margin:0 0 1rem;font-size:1rem}
+    nav a{display:block;color:#fff;text-decoration:none;padding:.5rem;border-radius:4px;margin-bottom:.25rem;transition:background .2s}
+    nav a:hover{background:var(--accent);color:var(--primary)}
+    .container{display:flex;margin-top:var(--header-height)}
+    #detail-view{flex:1;padding:2rem;margin:0 320px 0 220px;background:#fff}
+    #announcement-panel{position:fixed;top:var(--header-height);right:0;bottom:0;width:300px;background:#fff;border-left:1px solid #ddd;padding:1rem;overflow-y:auto}
+    h2{margin-top:0;color:var(--primary);border-bottom:2px solid var(--accent);padding-bottom:.5rem}
+    h3.section{margin-top:2rem;color:var(--primary);font-size:1.1rem;border-bottom:1px solid #ddd;padding-bottom:.25rem}
+    table{width:100%;border-collapse:collapse;margin-top:1rem}
+    th,td{border:1px solid #ddd;padding:.75rem;text-align:left}
+    .cards-container{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:1rem;margin-top:1rem}
+    .card{background:#fff;border:1px solid #ddd;border-radius:8px;padding:1.25rem;box-shadow:0 2px 4px rgba(0,0,0,.1);display:flex;flex-direction:column}
+    .badge{display:inline-block;background:var(--primary);color:#fff;font-size:.75rem;font-weight:600;text-transform:uppercase;padding:.25rem .75rem;border-radius:12px;align-self:center;margin-bottom:.75rem}
+    .card h4{margin:0 0 .5rem;color:var(--primary);font-size:1rem}
+    .description{flex:1;font-size:.875rem;line-height:1.4;color:var(--text);margin-bottom:1rem}
+    .actions{display:flex;gap:1rem}
+    .actions a{position:relative;text-decoration:none;font-size:.875rem;font-weight:600;color:var(--primary);display:inline-flex;align-items:center}
+    .actions a::after{content:'→';margin-left:.25rem}
+    .actions a:hover{color:var(--accent)}
+  </style>
+  <script src="https://cdn.jsdelivr.net/npm/fuse.js/dist/fuse.min.js"></script>
+</head>
+<body>
+  <header>
+      <img src="https://raw.githubusercontent.com/chmpzu/po-kb-test/6de8fd49f816bdd5a12098ef9dc0b7d449c76a52/assets/photos/Default%20KarParts360%20LOGO%20Version%203.png" alt="Karparts360 Logo">
+    <h1>PO Knowledge Base</h1>
+    <div class="search-wrapper">
+      <input id="searchInput" type="search" placeholder="Search keyword...">
+      <ul id="searchResults"></ul>
+    </div>
+  </header>
+  <nav>
+    <h3>Navigate</h3>
+    <a href="#dashboard">Dashboard</a>
+    <a href="#email">Email Templates</a>
+    <a href="#trackers">Trackers</a>
+    <a href="#ratings">Marketplace Ratings</a>
+    <a href="#sops">SOPs</a>
+    <a href="#reports">Reports</a>
+    <a href="#suppliers">Supplier Contacts</a>
+    <a href="#tasks">Task List</a>
+    <a href="#processors" id="processors-link">Processors</a>
+  </nav>
+  
+  <div class="container">
+    <div id="detail-view">
+      <h2>Welcome</h2>
+      <p>Select a section from the navigation to view details here.</p>
+    </div>
+    <aside id="announcement-panel">
+      <h2>Announcements</h2>
+      <ul></ul>
+    </aside>
+  </div>
+
+  <div id="templates" style="display:none;">
+    <div data-template="dashboard"><h2>Dashboard</h2><p>Overview of quick links and recent updates.</p></div>
+    <div data-template="email"><h2>Email Templates</h2><ul><li>Customer Outreach</li><li>Internal Notifications</li><li>Supplier Requests</li></ul><p><em>Suggest new templates via the submission form.</em></p></div>
+    <div data-template="trackers"><h2>Trackers</h2><ul><li>Order Fulfillment Status</li><li>Inventory Levels</li><li>Marketing Campaign Performance</li></ul></div>
+    <div data-template="ratings"><h2>Marketplace Performance Ratings</h2><p>KPIs and scorecards for seller ratings, return rates, on-time delivery.</p></div>
+    <div data-template="sops"><h2>SOPs</h2><ul><li>Sales</li><li>Procurement</li><li>Logistics</li><li>Customer Service</li></ul></div>
+    <div data-template="reports"><h2>Reports</h2><table><thead><tr><th>Report</th><th>Frequency</th><th>Owner</th></tr></thead><tbody><tr><td>Sales Dashboard</td><td>Daily</td><td>Sales Team</td></tr><tr><td>P&L Report</td><td>Monthly</td><td>Finance</td></tr></tbody></table></div>
+    <div data-template="suppliers"><h2>Supplier Contacts</h2><div style="margin-bottom:1rem;">
+    <label for="supplierFilter" style="font-weight:600;margin-right:.5rem">Filter by Supplier:</label>
+    <select id="supplierFilter" style="padding:.5rem;border:1px solid #ccc;border-radius:4px">
+      <option value="">All</option>
+      <option value="DEPO">DEPO</option>
+      <option value="TYC">TYC</option>
+      <option value="EAGLE">EAGLE</option>
+      <option value="KSI">KSI</option>
+      <option value="LKQ">LKQ</option>
+      <option value="USAUTO">USAUTO</option>
+      <option value="MEYER">MEYER</option>
+      <option value="KSOURCE">KSOURCE</option>
+      <option value="TONSA">TONSA</option>
+      <option value="T14">T14</option>
+      <option value="AMZL">AMZL</option>
+    </select>
+      </div>
+      <table id="supplierTable">
+        <thead>
+          <tr><th>Supplier</th><th>Contact</th><th>Email</th><th>Phone</th><th>Region</th><th>Status</th></tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+    <div data-template="tasks"><h2>Task List</h2>
+    <label for="staffFilter" style="font-weight:600;margin-right:.5rem">Show tasks for:</label>
+    <select id="staffFilter" style="padding:.5rem;border:1px solid #ccc;border-radius:4px"><option value="">— Select staff —</option></select>
+    <table id="taskTable" style="width:100%;border-collapse:collapse;margin-top:1rem">
+      <thead></thead>
+      <tbody></tbody></table></div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/fuse.js/dist/fuse.min.js"></script>
+  
+<script>
+<script src="https://cdn.jsdelivr.net/npm/fuse.js/dist/fuse.min.js"></script>
+<script>
+  // Utilities
+  const parseGoogleDate = s => {
+    const m = /^Date\(([\d,]+)\)$/.exec(s);
+    return m ? new Date(...m[1].split(',').map(Number)) : new Date(s);
+  };
+  const formatTimestamp = d => {
+    let h = d.getHours(), ampm = h < 12 ? 'AM' : 'PM';
+    h = h % 12 || 12;
+    const pad = n => String(n).padStart(2,'0');
+    return `${pad(d.getMonth()+1)}/${pad(d.getDate())}/${d.getFullYear()} ${pad(h)}:${pad(d.getMinutes())} ${ampm}`;
+  };
+
+  // IDs and staff mapping
+  const SHEET_ID      = '1zWuPjF-bTWWRTtbs9BLWJk3w4h7Xrpi5oqyUbi6Oqrg';
+  const TASK_SHEET_ID = '1uqcBvF391zu34vQY-orpiWpGqqcjqevtB3yFByd0VDI';
+  const STAFF_OPTIONS = [
+    { full: 'Summary of Schedule',   tab: 'Summary of Schedule' },
+    { full: 'Marcus Bañez',          tab: 'Marcus' },
+    { full: 'Kathleen Delos Santos', tab: 'Kath' },
+    { full: 'Christine Anastacio',   tab: 'Christine' },
+    { full: 'Mary Guray',            tab: 'Mary' },
+    { full: 'Jerrilyn Alarma',       tab: 'Jeh' },
+    { full: 'Shari Kristine Torres', tab: 'Shari' },
+    { full: 'Hanna Ranario',         tab: 'Hanna' },
+    { full: 'Daricalyn Rosales',     tab: 'Daricalyn' },
+    { full: 'Hyacinth Mae Cipriano', tab: 'Hyacinth' },
+    { full: 'Cheztierlee Arlos',     tab: 'Chez' },
+    { full: 'Daryl Pagilagan',       tab: 'Daryl' },
+    { full: 'Jovilyn Leonaras',      tab: 'Jovilyn' }
+  ];
+
+  // Generic fetcher
+  async function fetchSheetFromId(sheetId, tab) {
+    const url = `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?sheet=${encodeURIComponent(tab)}&tqx=out:json`;
+    const txt = await (await fetch(url)).text();
+    const table = JSON.parse(txt.slice(47, -2)).table;
+    return table.rows.map(r => r.c.map(c => c && c.v));
+  }
+
+  // Load Announcements, Email, SOPs, Trackers
+  async function loadPOKB() {
+    // Announcements
+    try {
+      const rows = await fetchSheetFromId(SHEET_ID, 'Announcements');
+      const ul = document.querySelector('#announcement-panel ul');
+      ul.innerHTML = rows.length
+        ? rows.map((r,i) => {
+            const dt = typeof r[0]==='string' ? parseGoogleDate(r[0]) : new Date(r[0]);
+            const title = r[1] || '';
+            const content = r[2] || '';
+            return `<li>
+              <span class="ann-time">${formatTimestamp(dt)}</span>
+              <a href="#ann-${i}" class="ann-link" 
+                 data-title="${title.replace(/"/g,'&quot;')}"
+                 data-content="${content.replace(/"/g,'&quot;')}">
+                ${title}
+              </a>
+            </li>`;
+          }).join('')
+        : '<li class="italic">No announcements.</li>';
+    } catch(e){ console.error(e); }
+
+    // Email templates
+    try {
+      const tpl = document.querySelector('[data-template="email"]');
+      const data = (await fetchSheetFromId(SHEET_ID,'Email Templates')).slice(1);
+      const groups = data.reduce((g,[cat,name,content])=>{
+        (g[cat]=g[cat]||[]).push({name,content}); return g;
+      },{});
+      tpl.innerHTML = '<h2>Email Templates</h2>' +
+        Object.entries(groups).map(([cat,items]) =>
+          `<h3 class="section">${cat.toUpperCase()}</h3><ul>`+
+          items.map(i=>`<li>
+            <a href="#" class="email-template-link" data-content="${i.content.replace(/"/g,'&quot;')}">
+              ${i.name}
+            </a>
+          </li>`).join('')+
+          '</ul>'
+        ).join('');
+    } catch(e){ console.error(e) }
+
+    // SOPs
+    try {
+      const tpl = document.querySelector('[data-template="sops"]');
+      const rows = await fetchSheetFromId(SHEET_ID,'SOPs');
+      const groups = rows.slice(1).reduce((g,[cat,name,content])=>{
+        (g[cat]=g[cat]||[]).push({name,content}); return g;
+      },{});
+      tpl.innerHTML = '<h2>SOPs</h2>' +
+        Object.entries(groups).map(([cat,items]) =>
+          `<h3 class="section">${cat}</h3><ul>`+
+          items.map(i=>`<li>
+            <a href="#" class="sop-link"
+               data-title="${i.name.replace(/"/g,'&quot;')}"
+               data-content="${i.content.replace(/"/g,'&quot;')}">
+              ${i.name}
+            </a>
+          </li>`).join('')+
+          '</ul>'
+        ).join('');
+    } catch(e){ console.error(e) }
+
+    // Trackers
+    try {
+      const tpl = document.querySelector('[data-template="trackers"]');
+      const rows = await fetchSheetFromId(SHEET_ID,'Trackers');
+      const groups = rows.slice(1).reduce((g,[cat,name,url])=>{
+        (g[cat]=g[cat]||[]).push({name,url}); return g;
+      },{});
+      tpl.innerHTML = '<h2>Trackers</h2>' +
+        Object.entries(groups).map(([cat,items]) =>
+          `<h3 class="section">${cat}</h3><ul>`+
+          items.map(i=>`<li><a href="${i.url}" target="_blank">${i.name}</a></li>`).join('')+
+          '</ul>'
+        ).join('');
+    } catch(e){ console.error(e) }
+      try {
+        const rows = await fetchSheetFromId(SHEET_ID, 'Supplier Contacts');
+        const [, ...data] = rows;
+        const tbody = document.querySelector('#supplierTable tbody');
+        const filter = document.querySelector('#supplierFilter');
+        const suppliers = new Set();
+
+        // Clear previous content
+        tbody.innerHTML = '';
+        filter.innerHTML = '<option value="">All</option>';
+
+        // Build rows and collect unique names
+        data.forEach(r => {
+          if (r.every(cell => !cell)) return;
+          const [supplier, contact, email, phone, region, status] = r;
+          suppliers.add(supplier);
+          const tr = document.createElement('tr');
+          [supplier, contact, email, phone, region, status].forEach(text => {
+            const td = document.createElement('td'); td.textContent = text || ''; tr.append(td);
+          });
+          tbody.append(tr);
+        });
+
+        // Populate filter dropdown
+        suppliers.forEach(s => {
+          const opt = document.createElement('option'); opt.value = s; opt.textContent = s; filter.append(opt);
+        });
+      } catch (e) { console.error('Supplier load error', e); }
+    }
+  
+
+  // Populate Task List dropdown template
+  document.addEventListener('DOMContentLoaded',()=>{
+    const f = document.querySelector('#templates #staffFilter');
+    f.innerHTML = '<option value="">— Select staff —</option>';
+    STAFF_OPTIONS.forEach(o=>{
+      const opt = document.createElement('option');
+      opt.value = o.tab; opt.textContent = o.full;
+      f.append(opt);
+    });
+  });
+
+  // Navigation + live search
+  function initSearchNav(){
+    const items = [];
+    document.querySelectorAll('nav a').forEach(a=>
+      items.push({key:a.hash.slice(1),title:a.textContent})
+    );
+    document.querySelectorAll('#templates [data-template]').forEach(div=>{
+      const h2 = div.querySelector('h2');
+      if(h2) items.push({key:div.dataset.template,title:h2.textContent});
+    });
+    const fuse = new Fuse(items,{keys:['title'],threshold:0.3});
+    const inp = document.getElementById('searchInput'),
+          res = document.getElementById('searchResults');
+    inp.oninput = () => {
+      const q = inp.value.trim();
+      res.innerHTML = q
+        ? fuse.search(q,{limit:10}).map(m=>`<li>${m.item.title}</li>`).join('')
+        : '';
+      res.querySelectorAll('li').forEach((li,i)=>{
+        li.onclick = () => {
+          const key = fuse.search(q,{limit:10})[i].item.key;
+          document.getElementById('detail-view').innerHTML =
+            document.querySelector(`[data-template="${key}"]`).innerHTML;
+          if(key==='tasks'){
+            const filter = document.getElementById('staffFilter');
+            filter.value='Summary of Schedule';
+            filter.dispatchEvent(new Event('change',{bubbles:true}));
+          }
+          inp.value=''; res.innerHTML='';
+        };
+      });
+    };
+    document.querySelectorAll('nav a').forEach(a=>{
+      a.onclick = e => {
+        e.preventDefault();
+        const key = a.hash.slice(1);
+        document.getElementById('detail-view').innerHTML =
+          document.querySelector(`[data-template="${key}"]`).innerHTML;
+        if(key==='tasks'){
+          const filter = document.getElementById('staffFilter');
+          filter.value='Summary of Schedule';
+          filter.dispatchEvent(new Event('change',{bubbles:true}));
+        }
+      };
+    });
+  }
+
+  // Task List rendering (delegate)
+  document.body.addEventListener('change', async e=>{
+    if(e.target.id!=='staffFilter') return;
+    const tab   = e.target.value;
+    const thead = document.querySelector('#taskTable thead');
+    const tbody = document.querySelector('#taskTable tbody');
+    thead.innerHTML=''; tbody.innerHTML='';
+    if(!tab) return;
+    try {
+      const rows = await fetchSheetFromId(TASK_SHEET_ID,tab);
+      if(rows.length<2) return;
+      const header = rows[1];
+      let last = header.length-1;
+      while(last>=0 && !header[last]?.toString().trim()) last--;
+      if(last<0) return;
+      const trH = document.createElement('tr');
+      for(let i=0;i<=last;i++){
+        if(!header[i]?.toString().trim()) continue;
+        const th = document.createElement('th');
+        th.textContent = header[i];
+        trH.appendChild(th);
+      }
+      thead.appendChild(trH);
+      rows.slice(2).forEach(r=>{
+        const tr = document.createElement('tr');
+        for(let i=0;i<=last;i++){
+          if(!header[i]?.toString().trim()) continue;
+          const td = document.createElement('td');
+          td.textContent = r[i] ?? '';
+          tr.appendChild(td);
+        }
+        tbody.appendChild(tr);
+      });
+    } catch(err){ console.error(err) }
+  });
+
+  document.body.addEventListener('click', e=>{
+
+    if(e.target.matches('.email-template-link')){
+      e.preventDefault();
+      const content = e.target.dataset.content,
+            title   = e.target.textContent.trim();
+      const modal = document.createElement('div');
+      modal.innerHTML = `
+        <div style="position:fixed;inset:0;background:rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center;z-index:10000">
+          <div style="background:#fff;padding:1rem;max-width:600px;width:90%;position:relative;box-shadow:0 4px 12px rgba(0,0,0,0.3)">
+            <h2 style="margin:0;padding-bottom:.25rem;border-bottom:2px solid var(--accent);font-size:1.25rem;font-weight:600;color:var(--primary)">${title}</h2>
+            <button id="copyEmailContent"style="position:absolute;top:.5rem;right:4.5rem;background:var(--accent);color:#fff;border:none;padding:.5rem .75rem;border-radius:4px;cursor:pointer;font-size:.9rem">Copy</button>
+            <button id="closeModal"style="position:absolute;top:.5rem;right:.5rem;background:none;border:none;font-size:1.25rem;cursor:pointer">✕</button>
+            <div style="margin-top:.5rem;max-height:60vh;overflow:auto;white-space:pre-wrap;line-height:1.4;color:var(--text)">${content}</div></div></div>`;
+      document.body.append(modal);
+      modal.querySelector('#copyEmailContent').onclick = ()=>{
+        navigator.clipboard.writeText(content).then(()=>{
+          const btn = modal.querySelector('#copyEmailContent');
+          btn.textContent = 'Copied!'; setTimeout(()=>btn.textContent='Copy',1500);
+        });
+      };
+      modal.querySelector('#closeModal').onclick = ()=>modal.remove();
+      return;
+    }
+
+    if(e.target.matches('.sop-link')){
+      e.preventDefault();
+      const content = e.target.dataset.content,
+            title   = e.target.dataset.title;
+      const modal = document.createElement('div');
+      modal.innerHTML = `
+        <div style="position:fixed;inset:0;background:rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center;z-index:10000">
+        <div style="background:#fff;padding:1rem;max-width:600px;width:90%;position:relative;box-shadow:0 4px 12px rgba(0,0,0,0.3)">
+        <h2 style="margin:0 0 .5rem;padding-bottom:.25rem;border-bottom:2px solid var(--accent);font-size:1.25rem;font-weight:600;color:var(--primary)">${title}</h2>
+        <button id="closeModal"style="position:absolute;top:.5rem;right:.5rem;background:none;border:none;font-size:1.25rem;cursor:pointer">✕</button><div style="margin-top:.5rem;max-height:60vh;overflow:auto;white-space:pre-wrap;line-height:1.4;color:var(--text)">${content}</div></div></div>`;
+      document.body.append(modal);
+      modal.querySelector('#closeModal').onclick = ()=>modal.remove();
+      return;
+    }
+
+    if(e.target.id==='processors-link'){
+      e.preventDefault();
+      document.getElementById('detail-view').innerHTML = `
+        <iframe src="processors.html" title="PO Processors"style="width:100%;height:100vh;border:0;min-height:600px"></iframe>`;
+      return;
+    }
+
+    if(e.target.matches('.ann-link')){
+      e.preventDefault();
+      const title=e.target.dataset.title;const content=e.target.dataset.content;
+      const time=e.target.parentElement.querySelector('.ann-time').textContent;
+      const dv=document.getElementById('detail-view');
+      dv.innerHTML=`<button class="close-btn" id="closeDetail">✕</button><h2>${title}</h2><p class="ann-time">${time}</p><div class="description">${content}</div>`;
+      return;
+    }
+    if(e.target.id==='closeDetail'){
+      const dv=document.getElementById('detail-view');
+      dv.innerHTML=`<h2>Welcome</h2><p>Select a section from the navigation to view details here.</p>`;
+      return;
+    }
+
+      if (e.target.id !== 'supplierFilter') return;
+      const val = e.target.value;
+      document.querySelectorAll('#supplierTable tbody tr').forEach(row => {
+        row.style.display = (!val || row.cells[0].textContent === val) ? '' : 'none';
+      });
+    });
+
+  document.addEventListener('DOMContentLoaded', ()=>{
+    loadPOKB();
+    initSearchNav();
+
+    document.querySelector('nav a[href="#dashboard"]').click();
+  });
+
+</script>
+</body>
+</html>
