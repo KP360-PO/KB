@@ -27,9 +27,9 @@
     h3.section{margin-top:2rem;color:var(--primary);font-size:1.1rem;border-bottom:1px solid #ddd;padding-bottom:.25rem}
     table{width:100%;border-collapse:collapse;margin-top:1rem}
     th,td{border:1px solid #ddd;padding:.75rem;text-align:left}
-    .marketplace-performance {margin-top: 1.5rem;grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));}
-    .screenshot {width: 100%;height: auto;border-radius: 4px;box-shadow: 0 1px 4px rgba(0,0,0,.1);margin-top: 0.5rem;}
-    .marketplace-performance .badge {font-size: .75rem;padding: .25rem .5rem;margin-bottom: .5rem;}
+    .marketplace-performance {display: grid;grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));gap: 1.5rem;justify-content: center;}
+    .marketplace-performance .card {max-width: 380px;}
+    .marketplace-performance .screenshot {width: 100%;height: auto;object-fit: contain;}
     .cards-container{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:1rem;margin-top:1rem}
     .card{background:#fff;border:1px solid #ddd;border-radius:8px;padding:1.25rem;box-shadow:0 2px 4px rgba(0,0,0,.1);display:flex;flex-direction:column}
     .badge{display:inline-block;background:var(--primary);color:#fff;font-size:.75rem;font-weight:600;text-transform:uppercase;padding:.25rem .75rem;border-radius:12px;align-self:center;margin-bottom:.75rem}
