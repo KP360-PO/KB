@@ -27,10 +27,9 @@
     h3.section{margin-top:2rem;color:var(--primary);font-size:1.1rem;border-bottom:1px solid #ddd;padding-bottom:.25rem}
     table{width:100%;border-collapse:collapse;margin-top:1rem}
     th,td{border:1px solid #ddd;padding:.75rem;text-align:left}
-	  .cards-container.marketplace-performance .card:nth-child(3) {grid-row: 1;grid-column: 1 / -1;}
-	  .cards-container.marketplace-performance .card:nth-child(1) {grid-row: 2;grid-column: 1;}
-	  .cards-container.marketplace-performance .card:nth-child(2) {grid-row: 2;grid-column: 2;}
-    .cards-container.marketplace-performance .badge { justify-self: center; width: auto; }
+    .cards-container.marketplace-performance {display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.2rem;}
+    .cards-container.marketplace-performance .card {max-width: none; width: auto;}
+    .cards-container.marketplace-performance .screenshot {width: 100%; height: auto; object-fit: contain;}
     .cards-container{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:1rem;margin-top:1rem}
     .card{background:#fff;border:1px solid #ddd;border-radius:8px;padding:1.25rem;box-shadow:0 2px 4px rgba(0,0,0,.1);display:flex;flex-direction:column}
     .badge{display:inline-block;background:var(--primary);color:#fff;font-size:.75rem;font-weight:600;text-transform:uppercase;padding:.25rem .75rem;border-radius:12px;align-self:center;margin-bottom:.75rem}
