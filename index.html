@@ -27,6 +27,9 @@
     h3.section{margin-top:2rem;color:var(--primary);font-size:1.1rem;border-bottom:1px solid #ddd;padding-bottom:.25rem}
     table{width:100%;border-collapse:collapse;margin-top:1rem}
     th,td{border:1px solid #ddd;padding:.75rem;text-align:left}
+    .marketplace-performance {margin-top: 1.5rem;grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));}
+    .screenshot {width: 100%;height: auto;border-radius: 4px;box-shadow: 0 1px 4px rgba(0,0,0,.1);margin-top: 0.5rem;}
+    .marketplace-performance .badge {font-size: .75rem;padding: .25rem .5rem;margin-bottom: .5rem;}
     .cards-container{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:1rem;margin-top:1rem}
     .card{background:#fff;border:1px solid #ddd;border-radius:8px;padding:1.25rem;box-shadow:0 2px 4px rgba(0,0,0,.1);display:flex;flex-direction:column}
     .badge{display:inline-block;background:var(--primary);color:#fff;font-size:.75rem;font-weight:600;text-transform:uppercase;padding:.25rem .75rem;border-radius:12px;align-self:center;margin-bottom:.75rem}
@@ -73,7 +76,25 @@
   </div>
 
   <div id="templates" style="display:none;">
-    <div data-template="dashboard"><h2>Dashboard</h2><p>Overview of quick links and recent updates.</p></div>
+    <div data-template="dashboard">
+  <h2>Dashboard</h2>
+  <h3 class="section">Marketplace Performance</h3>
+  <div class="cards-container marketplace-performance">
+    <div class="card">
+      <div class="badge">eBay</div>
+      <img src="assets/screenshots/ebay-performance.png"alt="eBay Performance"class="screenshot"/>
+    </div>
+    <div class="card">
+      <div class="badge">Amazon</div>
+      <img src="assets/screenshots/amazon-performance.png"alt="Amazon Performance"class="screenshot"/>
+    </div>
+    <div class="card">
+      <div class="badge">Walmart</div>
+      <img src="assets/screenshots/walmart-performance.png"alt="Walmart Performance"class="screenshot"/>
+    </div>
+  </div>
+</div>
+
     <div data-template="email"><h2>Email Templates</h2><ul><li>Customer Outreach</li><li>Internal Notifications</li><li>Supplier Requests</li></ul><p><em>Suggest new templates via the submission form.</em></p></div>
     <div data-template="trackers"><h2>Trackers</h2><ul><li>Order Fulfillment Status</li><li>Inventory Levels</li><li>Marketing Campaign Performance</li></ul></div>
     <div data-template="ratings"><h2>Marketplace Performance Ratings</h2><p>KPIs and scorecards for seller ratings, return rates, on-time delivery.</p></div>
