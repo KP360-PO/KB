@@ -159,7 +159,6 @@
 <script src="https://cdn.jsdelivr.net/npm/fuse.js/dist/fuse.min.js"></script>
   
 <script>
-  // Utilities
   const parseGoogleDate = s => {
     const m = /^Date\(([\d,]+)\)$/.exec(s);
     return m ? new Date(...m[1].split(',').map(Number)) : new Date(s);
@@ -171,7 +170,6 @@
     return `${pad(d.getMonth()+1)}/${pad(d.getDate())}/${d.getFullYear()} ${pad(h)}:${pad(d.getMinutes())} ${ampm}`;
   };
 
-  // IDs and staff mapping
   const SHEET_ID      = '1zWuPjF-bTWWRTtbs9BLWJk3w4h7Xrpi5oqyUbi6Oqrg';
   const TASK_SHEET_ID = '1uqcBvF391zu34vQY-orpiWpGqqcjqevtB3yFByd0VDI';
   const STAFF_OPTIONS = [
@@ -190,7 +188,6 @@
     { full: 'Jovilyn Leonaras',      tab: 'Jovilyn' }
   ];
 
-  // Generic fetcher
   async function fetchSheetFromId(sheetId, tab) {
     const url = `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?sheet=${encodeURIComponent(tab)}&tqx=out:json`;
     const txt = await (await fetch(url)).text();
@@ -198,9 +195,8 @@
     return table.rows.map(r => r.c.map(c => c && c.v));
   }
 
-  // Load Announcements, Email, SOPs, Trackers
   async function loadPOKB() {
-    // Announcements
+
     try {
       const rows = await fetchSheetFromId(SHEET_ID, 'Announcements');
       const ul = document.querySelector('#announcement-panel ul');
@@ -221,7 +217,6 @@
         : '<li class="italic">No announcements.</li>';
     } catch(e){ console.error(e); }
 
-    // Email templates
     try {
       const tpl = document.querySelector('[data-template="email"]');
       const data = (await fetchSheetFromId(SHEET_ID,'Email Templates')).slice(1);
@@ -240,7 +235,6 @@
         ).join('');
     } catch(e){ console.error(e) }
 
-    // SOPs
     try {
       const tpl = document.querySelector('[data-template="sops"]');
       const rows = await fetchSheetFromId(SHEET_ID,'SOPs');
@@ -261,7 +255,6 @@
         ).join('');
     } catch(e){ console.error(e) }
 
-    // Trackers
     try {
       const tpl = document.querySelector('[data-template="trackers"]');
       const rows = await fetchSheetFromId(SHEET_ID,'Trackers');
@@ -282,11 +275,9 @@
         const filter = document.querySelector('#supplierFilter');
         const suppliers = new Set();
 
-        // Clear previous content
         tbody.innerHTML = '';
         filter.innerHTML = '<option value="">All</option>';
 
-        // Build rows and collect unique names
         data.forEach(r => {
           if (r.every(cell => !cell)) return;
           const [supplier, contact, email, phone, region, status] = r;
@@ -298,15 +289,12 @@
           tbody.append(tr);
         });
 
-        // Populate filter dropdown
         suppliers.forEach(s => {
           const opt = document.createElement('option'); opt.value = s; opt.textContent = s; filter.append(opt);
         });
       } catch (e) { console.error('Supplier load error', e); }
     }
   
-
-  // Populate Task List dropdown template
   document.addEventListener('DOMContentLoaded', async () => {
     const f = document.querySelector('#templates #staffFilter');
     f.innerHTML = '<option value="">— Select staff —</option>';
@@ -317,7 +305,6 @@
     });
   });
 
-  // Navigation + live search
   function initSearchNav(){
     const items = [];
     document.querySelectorAll('nav a').forEach(a=>
@@ -364,7 +351,6 @@
     });
   }
 
-  // Task List rendering (delegate)
   document.body.addEventListener('change', async e=>{
     if(e.target.id!=='staffFilter') return;
     const tab   = e.target.value;
@@ -454,48 +440,16 @@
     const time    = e.target.parentElement.querySelector('.ann-time').textContent;
 
     const modal = document.createElement('div');
-    modal.innerHTML = `
-      <div style="
-        position:fixed;inset:0;
-        background:rgba(0,0,0,0.5);
-        display:flex;align-items:center;justify-content:center;
-        z-index:10000">
-        <div style="
-          background:#fff;padding:1rem;
-          max-width:800px;width:100%;
-          position:relative;
-          box-shadow:0 4px 12px rgba(0,0,0,0.3)">
-          <button id="closeAnnModal" style="
-            position:absolute;top:.5rem;right:.5rem;
-            background:none;border:none;font-size:1.25rem;
-            cursor:pointer">✕</button>
-          <h2 style="
-            margin:;padding-bottom:.25rem;
-            border-bottom:2px solid var(--accent);
-            font-size:1.25rem;font-weight:600;
-            color:var(--primary)">
-            ${title}
-          </h2>
-          <p style="
-            font-size:.875rem;color:var(--text);
-            margin:.5rem 0">
-            ${time}
-          </p>
-          <div style="white-space:pre-wrap;line-height:1.4;color:var(--text)">
-            ${content}
-          </div>
-        </div>
-      </div>`;
-    document.body.append(modal);
-    modal.querySelector('#closeAnnModal').onclick = () => modal.remove();
-    return;
-  }
+modal.innerHTML = `
+  <div style="position:fixed; inset:0;background:rgba(0,0,0,0.5);display:flex; align-items:center; justify-content:center;z-index:10000">
+    <div style="background:#fff;padding:1rem .75rem .75rem .75rem;max-width:800px; width:90%;position:relative;box-shadow:0 4px 12px rgba(0,0,0,0.3);display:flex; flex-direction:column;">
+      <button id="closeAnnModal" style="position:absolute; top:.5rem; right:.5rem;background:none; border:none;font-size:1.25rem; cursor:pointer;">✕</button>
+      <h2 style="margin:0;padding-bottom:.25rem;border-bottom:2px solid var(--accent);font-size:1.2rem; font-weight:600;color:var(--primary);">${title}</h2>
+      <p style="margin:0;padding-top:.25rem;font-size:.875rem; color:var(--text);">${time}</p>
+      <div style="margin:0;padding:.25rem 0;overflow:auto;white-space:pre-wrap;line-height:1.4;color:var(--text);">${content}</div></div></div>`;
 
-  // Close-detail → go dashboard
-  if (e.target.id === 'closeDetail') {
-    document.querySelector('nav a[href="#dashboard"]').click();
-    return;
-  }
+  document.body.append(modal);modal.querySelector('#closeAnnModal').onclick = () => modal.remove();return;}
+  if (e.target.id === 'closeDetail') {document.querySelector('nav a[href="#dashboard"]').click();return;}
 
       if (e.target.id !== 'supplierFilter') return;
       const val = e.target.value;
@@ -503,85 +457,61 @@
         row.style.display = (!val || row.cells[0].textContent === val) ? '' : 'none';
       });
     });
-    
 
-//–– after all function declarations:
 document.addEventListener('DOMContentLoaded', async () => {
-  // wait for sheets to load
+
   await loadPOKB();
 
-  // debug: how many <li>s do we have?
   console.log('Announcements loaded:', 
-    document.querySelectorAll('#announcement-panel ul li').length);
+  document.querySelectorAll('#announcement-panel ul li').length);
   initSearchNav();
   showLatestAnnouncementModal();
 
   document.querySelector('nav a[href="#dashboard"]').click();
 });
 
-  function showLatestAnnouncementModal() {
+function showLatestAnnouncementModal() {
   const listItems = document.querySelectorAll('#announcement-panel ul li');
-  if (!listItems.length) return; // no anns
+  if (!listItems.length) return;
 
-  // Assume the first <li> is the most recent
   const firstLi = listItems[0];
-  const title = firstLi.querySelector('.ann-link').dataset.title;
+  const title   = firstLi.querySelector('.ann-link').dataset.title;
   const content = firstLi.querySelector('.ann-link').dataset.content;
   const time    = firstLi.querySelector('.ann-time').textContent;
 
-  // Build modal HTML
+  const annKey = `${title}||${time}`;
+
+  if (localStorage.getItem('lastAckedAnnouncement') === annKey) return;
+
   const modal = document.createElement('div');
-  modal.id = 'welcomeAnnModal';
-  modal.innerHTML = `
-    <div style="
-      position:fixed; inset:0;
-      background:rgba(0,0,0,0.5);
-      display:flex; align-items:center; justify-content:center;
-      z-index:10000">
-      <div style="background:#fff; padding:1rem;max-width:900px; width:90%;position:relative; border-radius:8px;box-shadow:0 4px 12px rgba(0,0,0,0.3)">
-        <h2 style="margin:0 0 .5rem; padding-bottom:.25rem;
-          border-bottom:2px solid var(--accent);
-          font-size:1.5rem; color:var(--primary)">
-          ${title}
-        </h2>
-        <p style="font-size:.875rem; color:var(--text); margin:.25rem 0;">
-          ${time}
-        </p>
-        <div style="
-          margin:1rem 0; max-height:60vh;
-          overflow:auto; white-space:pre-wrap;
-          line-height:1.3; color:var(--text)">
-          ${content}
-        </div>
-        
-        <label style="display:flex; align-items:center; margin-bottom:1rem;">
-          <input type="checkbox" id="ackCheckbox" style="margin-right:.5rem">
-          I understand.
-        </label>
-        <button id="ackButton" disabled style="
-          padding:.5rem 1rem; border:none;
-          border-radius:4px; font-weight:600;
-          cursor:not-allowed; background:#ccc; color:#fff;">
-          Close
-        </button>
-      </div>
-    </div>`;
-  
+modal.innerHTML = `
+  <div style="position:fixed;inset:0;background:rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center;z-index:10000">
+    <div style="background:#fff;padding:1rem .75rem .75rem;max-width:800px;width:90%;border-radius:8px;box-shadow:0 4px 12px rgba(0,0,0,0.3);display:flex;flex-direction:column;">
+      <h2 style=" margin:0;padding-bottom:.25rem;border-bottom:2px solid var(--accent);font-size:1.5rem;color:var(--primary);">${title}</h2>
+      <p style="margin:0;padding-top:.25rem;font-size:.875rem;color:var(--text);">${time}</p>
+      <div style="margin:0;padding:.25rem 0;overflow:auto;white-space:pre-wrap;line-height:1.4;color:var(--text);">${content}</div>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-top:0;padding-top:.25rem;border-top:1px solid #eee;">
+        <label style="display:flex;align-items:center;margin:0;">
+          <input type="checkbox" id="ackCheckbox" style="margin-right:.5rem"/>I understand.</label>
+        <button id="ackButton" disabled style="padding:.5rem 1rem;border:none;border-radius:4px;font-weight:600;cursor:not-allowed;background:#ccc;color:#fff;">Close</button></div></div></div>`;
+
   document.body.append(modal);
 
-  // 3. Checkbox toggles the button
-  const checkbox = modal.querySelector('#ackCheckbox');
-  const button   = modal.querySelector('#ackButton');
-  checkbox.addEventListener('change', () => {
-    button.disabled = !checkbox.checked;
-    button.style.background = checkbox.checked ? 'var(--accent)' : '#ccc';
-    button.style.cursor    = checkbox.checked ? 'pointer'      : 'not-allowed';
+  const cb  = modal.querySelector('#ackCheckbox');
+  const btn = modal.querySelector('#ackButton');
+
+  cb.addEventListener('change', () => {
+    btn.disabled = !cb.checked;
+    btn.style.background = cb.checked ? 'var(--accent)' : '#ccc';
+    btn.style.cursor     = cb.checked ? 'pointer'      : 'not-allowed';
   });
 
-  // 4. Remove modal on click
-  button.addEventListener('click', () => modal.remove());
+  btn.addEventListener('click', () => {
+    localStorage.setItem('lastAckedAnnouncement', annKey);
+    modal.remove();
+  });
 }
-  
+
 </script>
 </body>
 </html>
