@@ -57,12 +57,12 @@
   </header>
   <nav><h3>Navigate</h3>
     <a href="#dashboard">Dashboard</a>
-    <a href="#email">Email Templates</a>
-    <a href="#trackers">Trackers</a>
-    <a href="#ratings">Marketplace Ratings</a>
-    <a href="#sops">SOPs</a>
     <a href="#reports">Reports</a>
     <a href="#suppliers">Supplier Contacts</a>
+    <a href="#trackers">Trackers</a>
+    <a href="#email">Email Templates</a>
+    <a href="#sops">SOPs</a>
+    <a href="#ratings">Tutorials</a>
     <a href="#tasks">Task List</a>
     <a href="#processors" id="processors-link">Processors</a></nav>
   
@@ -121,7 +121,7 @@
 
     <div data-template="email"><h2>Email Templates</h2><ul><li>Customer Outreach</li><li>Internal Notifications</li><li>Supplier Requests</li></ul><p><em>Suggest new templates via the submission form.</em></p></div>
     <div data-template="trackers"><h2>Trackers</h2><ul><li>Order Fulfillment Status</li><li>Inventory Levels</li><li>Marketing Campaign Performance</li></ul></div>
-    <div data-template="ratings"><h2>Marketplace Performance Ratings</h2><p>KPIs and scorecards for seller ratings, return rates, on-time delivery.</p></div>
+    <div data-template="ratings"><h2>Tutorials</h2><p>Step-by-step how-to video guides.</p></div>
     <div data-template="sops"><h2>SOPs</h2><ul><li>Sales</li><li>Procurement</li><li>Logistics</li><li>Customer Service</li></ul></div>
     <div data-template="reports"><h2>Reports</h2><table><thead><tr><th>Report</th><th>Frequency</th><th>Owner</th></tr></thead><tbody><tr><td>Sales Dashboard</td><td>Daily</td><td>Sales Team</td></tr><tr><td>P&L Report</td><td>Monthly</td><td>Finance</td></tr></tbody></table></div>
     <div data-template="suppliers"><h2>Supplier Contacts</h2><div style="margin-bottom:1rem;">
@@ -150,29 +150,33 @@
       </div>
 <div data-template="tasks">
   <h2>Task List</h2>
-  <div id="overallProgressContainer" style="margin-bottom:1rem;">
-    <div style="display:flex; align-items:center; justify-content:space-between;">
-      <span style="font-weight:600;">Overall Progress:</span>
-      <span id="overallProgressText" style="font-weight:600;">0%</span>
-    </div>
-    <div style="width:100%;height:12px;background:#e0e0e0;border-radius:6px;overflow:hidden;margin-top:4px;">
-      <div id="overallProgressBar" style="width:0%;height:100%;background:var(--accent);transition: width 0.3s ease;
-        "></div>
-    </div>
-  </div>
   <form id="taskForm" style="display:flex; gap:0.5rem; align-items:center; margin-bottom:1rem;">
     <input type="date"id="taskDate"required style="padding:0.5rem; border:1px solid #ccc; border-radius:4px;"/>
     <input type="time"id="taskTime"required style="padding:0.5rem; border:1px solid #ccc; border-radius:4px;"/>
-    <input type="text"id="taskName"placeholder="Task description"required style="flex:1; padding:0.65rem; border:1px solid #ccc; border-radius:4px;"/>
-    <button type="submit"style="padding:0.5rem 1rem; background:var(--accent); color:#fff; border:none; border-radius:4px;cursor:pointer;">Add</button>
+    <input type="text"id="taskName"placeholder="Task description"required style="flex:1; padding:0.5rem; border:1px solid #ccc; border-radius:4px;"/>
+    <button type="submit"style="padding:0.5rem 1rem; background:var(--accent); color:#fff; border:none; border-radius:4px; cursor:pointer;">Add</button>
   </form>
+
+  <div id="overallProgressContainer" style="margin-bottom:1rem;">
+    <div style="display:flex; align-items:center; justify-content:space-between;">
+      <span style="font-weight:600;">Progress:</span>
+      <span id="overallProgressText" style="font-weight:600;">0%</span>
+    </div>
+    <div style="width:100%;height:12px;background:#e0e0e0;border-radius:6px;overflow:hidden;margin-top:4px;">
+      <div id="overallProgressBar" style="width:0%;height:100%;background:var(--accent);transition: width 0.3s ease;"></div>
+    </div>
+  </div>
+
   <table id="taskTable" style="width:100%; border-collapse:collapse;">
-    <thead><tr>
+    <thead>
+      <tr>
         <th style="padding:0.5rem; border:1px solid #ddd; text-align:left;">Date</th>
         <th style="padding:0.5rem; border:1px solid #ddd; text-align:left;">Time</th>
         <th style="padding:0.5rem; border:1px solid #ddd; text-align:left;">Task</th>
         <th style="padding:0.5rem; border:1px solid #ddd; text-align:center;">Done</th>
-      </tr></thead>
+        <th style="padding:0.5rem; border:1px solid #ddd; text-align:center;">Delete</th>
+      </tr>
+    </thead>
     <tbody></tbody>
   </table>
 </div>
@@ -341,9 +345,6 @@ function initSearchNav() {
         if (key === 'tasks') {
           initializeTaskList();
         }
-
-        inp.value = '';
-        res.innerHTML = '';
       };
     });
   };
@@ -362,90 +363,190 @@ function initSearchNav() {
   });
 }
 
+const STORAGE_KEY = 'kp360_tasks';
+
+function loadTasksFromStorage() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    return raw ? JSON.parse(raw) : [];
+  } catch (e) {
+    console.warn('Could not parse tasks from localStorage:', e);
+    return [];
+  }
+}
+
+function saveTasksToStorage(taskArray) {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(taskArray));
+  } catch (e) {
+    console.error('Failed to save tasks:', e);
+  }
+}
+
 function updateOverallProgress() {
   const tbody = document.querySelector('#taskTable tbody');
   if (!tbody) return;
 
-  const rows = Array.from(tbody.querySelectorAll('tr'));
-  const totalTasks = rows.length;
-  if (totalTasks === 0) {
+  const visibleRows = Array.from(tbody.querySelectorAll('tr'));
+  const total = visibleRows.length;
+  if (total === 0) {
     document.getElementById('overallProgressText').textContent = '0%';
     document.getElementById('overallProgressBar').style.width = '0%';
     return;
   }
 
-  let completed = 0;
-  rows.forEach((tr) => {
+  let completedCount = 0;
+  visibleRows.forEach((tr) => {
     const chk = tr.querySelector('input[type="checkbox"]');
-    if (chk && chk.checked) completed++;
+    if (chk && chk.checked) completedCount++;
   });
 
-  const percent = Math.round((completed / totalTasks) * 100);
-  document.getElementById('overallProgressText').textContent = percent + '%';
-  document.getElementById('overallProgressBar').style.width = percent + '%';
+  const pct = Math.round((completedCount / total) * 100);
+  document.getElementById('overallProgressText').textContent = pct + '%';
+  document.getElementById('overallProgressBar').style.width = pct + '%';
+}
+
+function createRowForTask(taskObj, tasksArr) {
+  const selectedDate = document.getElementById('taskDate').value;
+  if (taskObj.date !== selectedDate) {
+    return;
+  }
+
+  const tbody = document.querySelector('#taskTable tbody');
+  if (!tbody) return;
+
+  const tr = document.createElement('tr');
+  tr.dataset.taskId = taskObj.id;
+
+  const tdDate = document.createElement('td');
+  tdDate.textContent = taskObj.date;
+  tdDate.style.padding = '0.5rem';
+  tdDate.style.border = '1px solid #ddd';
+  tr.appendChild(tdDate);
+
+  const tdTime = document.createElement('td');
+  tdTime.textContent = taskObj.time;
+  tdTime.style.padding = '0.5rem';
+  tdTime.style.border = '1px solid #ddd';
+  tr.appendChild(tdTime);
+
+  const tdTask = document.createElement('td');
+  tdTask.textContent = taskObj.name;
+  tdTask.style.padding = '0.5rem';
+  tdTask.style.border = '1px solid #ddd';
+  if (taskObj.done) {
+    tdTask.style.textDecoration = 'line-through';
+  }
+  tr.appendChild(tdTask);
+
+  const tdDone = document.createElement('td');
+  tdDone.style.textAlign = 'center';
+  tdDone.style.padding = '0.5rem';
+  tdDone.style.border = '1px solid #ddd';
+  const chk = document.createElement('input');
+  chk.type = 'checkbox';
+  chk.checked = taskObj.done;
+  chk.addEventListener('change', () => {
+
+    tdTask.style.textDecoration = chk.checked ? 'line-through' : 'none';
+
+    taskObj.done = chk.checked;
+    saveTasksToStorage(tasksArr);
+
+    updateOverallProgress();
+  });
+  tdDone.appendChild(chk);
+  tr.appendChild(tdDone);
+
+  const tdDel = document.createElement('td');
+  tdDel.style.textAlign = 'center';
+  tdDel.style.padding = '0.5rem';
+  tdDel.style.border = '1px solid #ddd';
+
+  const delBtn = document.createElement('button');
+  delBtn.textContent = '🗑️';
+  delBtn.style.cursor = 'pointer';
+  delBtn.style.background = 'none';
+  delBtn.style.border = 'none';
+  delBtn.style.fontSize = '1rem';
+  delBtn.title = 'Delete this task';
+  delBtn.addEventListener('click', () => {
+
+    tr.remove();
+
+    const idx = tasksArr.findIndex((t) => t.id === taskObj.id);
+    if (idx > -1) {
+      tasksArr.splice(idx, 1);
+      saveTasksToStorage(tasksArr);
+    }
+
+    updateOverallProgress();
+  });
+  tdDel.appendChild(delBtn);
+  tr.appendChild(tdDel);
+
+  tbody.appendChild(tr);
+}
+
+function renderTasksForSelectedDate(tasksArr) {
+  const tbody = document.querySelector('#taskTable tbody');
+  if (!tbody) return;
+
+  tbody.innerHTML = '';
+
+  tasksArr.forEach((taskObj) => {
+    createRowForTask(taskObj, tasksArr);
+  });
+
+  updateOverallProgress();
 }
 
 function initializeTaskList() {
   const form      = document.getElementById('taskForm');
   const dateInput = document.getElementById('taskDate');
+  const timeInput = document.getElementById('taskTime');
   const nameInput = document.getElementById('taskName');
-  const progInput = document.getElementById('taskProgress');
-  const tbody     = document.querySelector('#taskTable tbody');
 
-  if (!form || !dateInput || !nameInput || !progInput || !tbody) return;
+  if (!form || !dateInput || !timeInput || !nameInput) return;
 
-  const today = new Date().toISOString().split('T')[0];
-  dateInput.value = today;
+  dateInput.value = new Date().toISOString().split('T')[0];
+  const now = new Date();
+  const hh = String(now.getHours()).padStart(2, '0');
+  const mm = String(now.getMinutes()).padStart(2, '0');
+  timeInput.value = hh + ':' + mm;
+
+  const tasksArr = loadTasksFromStorage();
+
+  renderTasksForSelectedDate(tasksArr);
+
+  dateInput.addEventListener('change', () => {
+    renderTasksForSelectedDate(tasksArr);
+  });
 
   form.addEventListener('submit', (evt) => {
     evt.preventDefault();
-
     const dateVal = dateInput.value;
+    const timeVal = timeInput.value;
     const nameVal = nameInput.value.trim();
-    const progVal = parseInt(progInput.value, 10);
-
-    if (!dateVal || !nameVal || isNaN(progVal) || progVal < 0 || progVal > 100) {
-      alert('Please fill all fields and ensure 0≤%≤100.');
+    if (!dateVal || !timeVal || !nameVal) {
+      alert('Please fill in Date, Time, and Task.');
       return;
     }
 
-    const tr = document.createElement('tr');
-    const tdDate = document.createElement('td');
-    tdDate.textContent = dateVal;
-    tdDate.style.padding = '0.5rem';
-    tdDate.style.border = '1px solid #ddd';
-    tr.appendChild(tdDate);
-    const tdTask = document.createElement('td');
-    tdTask.textContent = nameVal;
-    tdTask.style.padding = '0.5rem';
-    tdTask.style.border = '1px solid #ddd';
-    tr.appendChild(tdTask);
-    const tdDone = document.createElement('td');
-    tdDone.style.textAlign = 'center';
-    tdDone.style.padding = '0.5rem';
-    tdDone.style.border = '1px solid #ddd';
-    const chk = document.createElement('input');
-    chk.type = 'checkbox';
-    chk.addEventListener('change', () => {
-      tdTask.style.textDecoration = chk.checked ? 'line-through' : 'none';
-      updateOverallProgress();
-    });
-    tdDone.appendChild(chk);
-    tr.appendChild(tdDone);
-    const tdProg = document.createElement('td');
-    tdProg.style.textAlign = 'right';
-    tdProg.style.padding = '0.5rem';
-    tdProg.style.border = '1px solid #ddd';
-    tdProg.textContent = progVal + '%';
-    tr.appendChild(tdProg);
-    tbody.appendChild(tr);
-    nameInput.value = '';
-    progInput.value = '0';
-    nameInput.focus();
+    const newTask = {
+      id: Date.now().toString(),
+      date: dateVal,
+      time: timeVal,
+      name: nameVal,
+      done: false
+    };
 
-    updateOverallProgress();
+    tasksArr.push(newTask);
+    saveTasksToStorage(tasksArr);
+    renderTasksForSelectedDate(tasksArr);
+    nameInput.value = '';
+    nameInput.focus();
   });
-  updateOverallProgress();
 }
 
   document.body.addEventListener('click', e=>{
@@ -512,7 +613,7 @@ modal.innerHTML = `
   document.body.append(modal);modal.querySelector('#closeAnnModal').onclick = () => modal.remove();return;}
   if (e.target.id === 'closeDetail') {document.querySelector('nav a[href="#dashboard"]').click();return;}
 
-  if (e.target.id !== 'supplierFilter') return;
+      if (e.target.id !== 'supplierFilter') return;
       const val = e.target.value;
       document.querySelectorAll('#supplierTable tbody tr').forEach(row => {
         row.style.display = (!val || row.cells[0].textContent === val) ? '' : 'none';
@@ -522,6 +623,7 @@ modal.innerHTML = `
 function showLatestAnnouncementModal() {
   const listItems = document.querySelectorAll('#announcement-panel ul li');
   if (!listItems.length) return;
+
   const firstLi = listItems[0];
   const title   = firstLi.querySelector('.ann-link').dataset.title;
   const content = firstLi.querySelector('.ann-link').dataset.content;
@@ -537,7 +639,7 @@ modal.innerHTML = `
       <div style="margin:0;padding:.25rem 0;overflow:auto;white-space:pre-wrap;line-height:1.4;color:var(--text);">${content}</div>
       <div style="display:flex;align-items:center;justify-content:space-between;margin-top:0;padding-top:.25rem;border-top:1px solid #eee;">
         <label style="display:flex;align-items:center;margin:0;">
-          <input type="checkbox" id="ackCheckbox" style="margin-right:.5rem"/>I understand.</label>
+        <input type="checkbox" id="ackCheckbox" style="margin-right:.5rem"/>I understand.</label>
         <button id="ackButton" disabled style="padding:.5rem 1rem;border:none;border-radius:4px;font-weight:600;cursor:not-allowed;background:#ccc;color:#fff;">Close</button></div></div></div>`;
   document.body.append(modal);
   const cb  = modal.querySelector('#ackCheckbox');
