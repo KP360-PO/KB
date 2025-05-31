@@ -477,35 +477,57 @@ modal.innerHTML = `
     });
   }
 
-  function wireUpTaskListLink() {
-    const taskListLink = document.getElementById('tasks-link');
-    if (!taskListLink) return;
+function wireUpTaskListLink() {
+  const taskListLink = document.getElementById('tasks-link');
+  if (!taskListLink) return;
 
-    taskListLink.onclick = async e => {
-      e.preventDefault();
+  taskListLink.onclick = async e => {
+    e.preventDefault();
 
-      document.querySelectorAll('nav a').forEach(link => link.classList.remove('active'));
-      taskListLink.classList.add('active');
+    document.querySelectorAll('nav a').forEach(link => link.classList.remove('active'));
+    taskListLink.classList.add('active');
 
-      const detailView = document.getElementById('detail-view');
+    const detailView = document.getElementById('detail-view');
+    detailView.classList.add('no-box');
 
-      detailView.classList.add('no-box');
+    try {
+      const resp = await fetch('task-list.html');
+      if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+      const htmlText = await resp.text();
 
-      try {
-        const resp = await fetch('task-list.html');
-        if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
-        const htmlText = await resp.text();
-        detailView.innerHTML = htmlText;
+      detailView.innerHTML = htmlText;
 
-        if (typeof initializeTaskList === 'function') {
-          initializeTaskList();
-        }
-      } catch (err) {
-        console.error('Failed to load Task List page:', err);
-        alert('Sorry, could not load Task List at this time.');
+      const temp = document.createElement('div');
+      temp.innerHTML = htmlText;
+
+      temp.querySelectorAll('script[src]').forEach(oldScript => {
+        const newScript = document.createElement('script');
+        newScript.src = oldScript.src;
+        Array.from(oldScript.attributes).forEach(attr => {
+          newScript.setAttribute(attr.name, attr.value);
+        });
+        document.getElementById('detail-view').appendChild(newScript);
+      });
+
+      temp.querySelectorAll('script:not([src])').forEach(oldScript => {
+        const inlineCode = oldScript.textContent;
+        const newScript  = document.createElement('script');
+        newScript.textContent = inlineCode;
+        document.getElementById('detail-view').appendChild(newScript);
+      });
+
+      if (typeof initializeTaskList === 'function') {
+        initializeTaskList();
       }
-    };
-  }
+    } catch (err) {
+      console.error('Failed to load Task List:', err);
+      detailView.innerHTML = `
+        <p style="color:red;">
+          Sorry, could not load <strong>Task List</strong> at this time.
+        </p>`;
+    }
+  };
+}
 
   document.addEventListener('DOMContentLoaded', async () => {
     await loadAnnouncements();
