@@ -1,3 +1,5 @@
+Just walk me through which part to remove and replace
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -20,12 +22,8 @@
     nav h3{color:var(--accent);margin:0 0 1rem;font-size:1rem}
     nav a{display:block;color:#fff;text-decoration:none;padding:.5rem;border-radius:4px;margin-bottom:.25rem;transition:background .2s}
     nav a:hover{background:var(--accent);color:var(--primary)}
-    nav a.active {background: var(--accent);color: var(--primary);}
     .container{display:flex;margin-top:var(--header-height)}
     #detail-view{flex:1;padding:2rem;margin:0 320px 0 220px;background:#fff}
-    #detail-view.no-box {background: transparent;padding: 0;margin: 0 300px 0 220px;box-shadow: none;border-radius: 0 ;}
-    #detail-view.iframe-container { background: transparent;padding: 0;margin: 0 300px 0 220px;box-shadow: none;border-radius: 0;}
-    #detail-view.iframe-container iframe {width: 100%;height: calc(100vh - var(--header-height));border: 0;}
     #announcement-panel{position:fixed;top:var(--header-height);right:0;bottom:0;width:300px;background:#fff;border-left:1px solid #ddd;padding:1rem;overflow-y:auto}
     h2{margin-top:0;color:var(--primary);border-bottom:2px solid var(--accent);padding-bottom:.5rem}
     h3.section{margin-top:2rem;color:var(--primary);font-size:1.1rem;border-bottom:1px solid #ddd;padding-bottom:.25rem}
@@ -59,18 +57,16 @@
       <ul id="searchResults"></ul>
     </div>
   </header>
-<nav>
-  <h3>Navigate</h3>
-  <a href="#dashboard" id="dashboard-link">Dashboard</a>
-  <a href="#reports"   id="reports-link">Reports</a>
-  <a href="#suppliers" id="suppliers-link">Supplier Contacts</a>
-  <a href="#trackers"  id="trackers-link">Trackers</a>
-  <a href="#email"     id="email-link">Email Templates</a>
-  <a href="#sops"      id="sops-link">SOPs</a>
-  <a href="#ratings"   id="ratings-link">Tutorials</a>
-  <a href="#tasks"     id="tasks-link">Task List</a>
-  <a href="#processors" id="processors-link">Processors</a>
-</nav>
+  <nav><h3>Navigate</h3>
+    <a href="#dashboard">Dashboard</a>
+    <a href="#reports">Reports</a>
+    <a href="#suppliers">Supplier Contacts</a>
+    <a href="#trackers">Trackers</a>
+    <a href="#email">Email Templates</a>
+    <a href="#sops">SOPs</a>
+    <a href="#ratings">Tutorials</a>
+    <a href="#tasks">Task List</a>
+    <a href="#processors" id="processors-link">Processors</a></nav>
   
   <div class="container">
     <div id="detail-view">
@@ -154,12 +150,51 @@
         <tbody></tbody>
       </table>
       </div>
+<div data-template="tasks">
+  <h2>Task List</h2>
+  <form id="taskForm" style="display:flex; gap:0.5rem; align-items:center; margin-bottom:1rem;">
+    <input type="date"id="taskDate"required style="padding:0.5rem; border:1px solid #ccc; border-radius:4px;"/>
+    <input type="time"id="taskFrom"required style="padding:0.5rem; border:1px solid #ccc; border-radius:4px;"/>
+    <input type="time"id="taskTo"required style="padding:0.5rem; border:1px solid #ccc; border-radius:4px;"/>
+    <input type="text"id="taskName"placeholder="Task description"required style="flex:1; padding:0.5rem; border:1px solid #ccc; border-radius:4px;"/>
+    <button type="submit"style="padding:0.5rem 1rem; background:var(--accent); color:#fff; border:none; border-radius:4px; cursor:pointer;">Add</button>
+  </form>
+  <div id="overallProgressContainer" style="margin-bottom:1rem;">
+    <div style="display:flex; align-items:center; justify-content:space-between;">
+      <span style="font-weight:600;">Progress:</span>
+      <span id="overallProgressText" style="font-weight:600;">0%</span>
+    </div>
+    <div style="width:100%; height:12px; background:#e0e0e0; border-radius:6px; overflow:hidden; margin-top:4px;">
+      <div
+        id="overallProgressBar"
+        style="width:0%; height:100%; background:var(--accent); transition: width 0.3s ease;"
+      ></div>
+    </div>
   </div>
+  <table id="taskTable" style="width:100%; border-collapse:collapse;">
+    <thead><tr>
+        <th style="padding:0.5rem; border:1px solid #ddd; text-align:left;">Date</th>
+        <th style="padding:0.5rem; border:1px solid #ddd; text-align:left;">Time</th>
+        <th style="padding:0.5rem; border:1px solid #ddd; text-align:left;">Task</th>
+        <th style="padding:0.5rem; border:1px solid #ddd; text-align:center;">Done</th>
+        <th style="padding:0.5rem; border:1px solid #ddd; text-align:center;">Delete</th>
+      </tr></thead>
+    <tbody></tbody>
+  </table>
+</div>
+</div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/fuse.js/dist/fuse.min.js"></script>
   
 <script>
+function to12Hour(hhmm) {
+  const [hh, mm] = hhmm.split(':').map(Number);
+  const suffix = hh >= 12 ? 'PM' : 'AM';
+  let hour12 = hh % 12;
+  if (hour12 === 0) hour12 = 12;
+  return `${hour12}:${String(mm).padStart(2,'0')} ${suffix}`; }
+
 const STORAGE_KEY = 'kp360_tasks';
 
 const parseGoogleDate = s => {
@@ -290,52 +325,46 @@ async function loadOtherSheets() {
       } catch (e) { console.error('Supplier load error', e); }
     }
 
-  function initSearchNav() {
-    const items = [];
-    document.querySelectorAll('nav a').forEach(a => {
-      items.push({ key: a.hash.slice(1), title: a.textContent });
-    });
-    document.querySelectorAll('#templates [data-template]').forEach(div => {
-      const h2 = div.querySelector('h2');
-      if (h2) {
-        items.push({ key: div.dataset.template, title: h2.textContent });
-      }
-    });
-    const fuse = new Fuse(items, { keys: ['title'], threshold: 0.3 });
-    const inp = document.getElementById('searchInput');
-    const res = document.getElementById('searchResults');
+function initSearchNav() {
+  const items = [];
+  document.querySelectorAll('nav a').forEach((a) => {
+    items.push({ key: a.hash.slice(1), title: a.textContent });
+  });
+  document.querySelectorAll('#templates [data-template]').forEach((div) => {
+    const h2 = div.querySelector('h2');
+    if (h2) {
+      items.push({ key: div.dataset.template, title: h2.textContent });
+    }
+  });
 
-    inp.oninput = () => {
-      const q = inp.value.trim();
-      if (!q) {
+  const fuse = new Fuse(items, { keys: ['title'], threshold: 0.3 });
+  const inp = document.getElementById('searchInput');
+  const res = document.getElementById('searchResults');
+  inp.oninput = () => {
+    const q = inp.value.trim();
+    if (!q) {
+      res.innerHTML = '';
+      return;
+    }
+
+    const matches = fuse.search(q, { limit: 10 });
+    res.innerHTML = matches
+      .map((m) => `<li>${m.item.title}</li>`)
+      .join('');
+
+ res.querySelectorAll('li').forEach((li, i) => {
+      li.onclick = () => {
+        const key = matches[i].item.key;
+        document.getElementById('detail-view').innerHTML =
+          document.querySelector(`[data-template="${key}"]`).innerHTML;
+        if (key === 'tasks') {
+          initializeTaskList();
+        }
+        inp.value = '';
         res.innerHTML = '';
-        return;
-      }
-      const matches = fuse.search(q, { limit: 10 });
-      res.innerHTML = matches.map(m => `<li>${m.item.title}</li>`).join('');
-
-      res.querySelectorAll('li').forEach((li, i) => {
-        li.onclick = () => {
-          const key = matches[i].item.key;
-          document.querySelectorAll('nav a').forEach(link => link.classList.remove('active'));
-          const navLink = document.getElementById(`${key}-link`);
-          if (navLink) navLink.classList.add('active');
-
-          if (key === 'tasks') {
-            document.getElementById('tasks-link').click();
-          } else {
-            // Normal template injection
-            const detailView = document.getElementById('detail-view');
-            detailView.classList.remove('no-box');
-            const tpl = document.querySelector(`[data-template="${key}"]`);
-            if (tpl) detailView.innerHTML = tpl.innerHTML;
-          }
-
-          inp.value = '';
-          res.innerHTML = '';
-        };
-      });
-  	}
+      };
+    });
+  };
 
   document.querySelectorAll('nav a').forEach((a) => {
     a.onclick = (e) => {
@@ -343,10 +372,189 @@ async function loadOtherSheets() {
       const key = a.hash.slice(1);
       document.getElementById('detail-view').innerHTML =
         document.querySelector(`[data-template="${key}"]`).innerHTML;
+      if (key === 'tasks') {
+        initializeTaskList();
+      }
 
       inp.value = '';
       res.innerHTML = '';
     };
+  });
+}
+
+function loadTasksFromStorage() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    return raw ? JSON.parse(raw) : [];
+  } catch (e) {
+    console.warn('Could not parse tasks from localStorage:', e);
+    return [];
+  }
+}
+
+function saveTasksToStorage(taskArray) {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(taskArray));
+  } catch (e) {
+    console.error('Failed to save tasks:', e);
+  }
+}
+
+function updateOverallProgress() {
+  const tbody = document.querySelector('#taskTable tbody');
+  if (!tbody) return;
+
+  const rows = Array.from(tbody.querySelectorAll('tr'));
+  const total = rows.length;
+  if (total === 0) {
+    document.getElementById('overallProgressText').textContent = '0%';
+    document.getElementById('overallProgressBar').style.width = '0%';
+    return;
+  }
+
+  let completedCount = 0;
+  rows.forEach(tr => {
+    const chk = tr.querySelector('input[type="checkbox"]');
+    if (chk && chk.checked) completedCount++;
+  });
+
+  const pct = Math.round((completedCount / total) * 100);
+  document.getElementById('overallProgressText').textContent = pct + '%';
+  document.getElementById('overallProgressBar').style.width = pct + '%';
+}
+
+function createRowForTask(taskObj, tasksArr) {
+  const selectedDate = document.getElementById('taskDate').value;
+  if (taskObj.date !== selectedDate) return;
+  const tbody = document.querySelector('#taskTable tbody');
+  if (!tbody) return;
+  const tr = document.createElement('tr');
+  tr.dataset.taskId = taskObj.id;
+  const tdDate = document.createElement('td');
+  tdDate.textContent = taskObj.date;
+  tdDate.style.padding = '0.5rem';
+  tdDate.style.border = '1px solid #ddd';
+  tr.appendChild(tdDate);
+  const tdTime = document.createElement('td');
+  const from12 = to12Hour(taskObj.from);
+  const to12   = to12Hour(taskObj.to);
+  tdTime.textContent = `${from12}–${to12}`;
+  tdTime.style.padding = '0.5rem';
+  tdTime.style.border = '1px solid #ddd';
+  tr.appendChild(tdTime);
+  const tdTask = document.createElement('td');
+  tdTask.textContent = taskObj.name;
+  tdTask.style.padding = '0.5rem';
+  tdTask.style.border = '1px solid #ddd';
+  if (taskObj.done) {
+    tdTask.style.textDecoration = 'line-through';
+  }
+  tr.appendChild(tdTask);
+
+  const tdDone = document.createElement('td');
+  tdDone.style.textAlign = 'center';
+  tdDone.style.padding = '0.5rem';
+  tdDone.style.border = '1px solid #ddd';
+  const chk = document.createElement('input');
+  chk.type = 'checkbox';
+  chk.checked = taskObj.done;
+  chk.addEventListener('change', () => {
+    tdTask.style.textDecoration = chk.checked ? 'line-through' : 'none';
+    taskObj.done = chk.checked;
+    saveTasksToStorage(tasksArr);
+    updateOverallProgress();
+  });
+  tdDone.appendChild(chk);
+  tr.appendChild(tdDone);
+
+  const tdDel = document.createElement('td');
+  tdDel.style.textAlign = 'center';
+  tdDel.style.padding = '0.5rem';
+  tdDel.style.border = '1px solid #ddd';
+  const delBtn = document.createElement('button');
+  delBtn.textContent = '🗑️';
+  delBtn.title = 'Delete this task';
+  delBtn.style.cursor = 'pointer';
+  delBtn.style.background = 'none';
+  delBtn.style.border = 'none';
+  delBtn.style.fontSize = '1rem';
+  delBtn.addEventListener('click', () => {
+    tr.remove();
+
+    const idx = tasksArr.findIndex(t => t.id === taskObj.id);
+    if (idx > -1) {
+      tasksArr.splice(idx, 1);
+      saveTasksToStorage(tasksArr);
+    }
+    updateOverallProgress();
+  });
+  tdDel.appendChild(delBtn);
+  tr.appendChild(tdDel);
+
+  tbody.appendChild(tr);
+}
+
+function renderTasksForSelectedDate(tasksArr) {
+  const tbody = document.querySelector('#taskTable tbody');
+  if (!tbody) return;
+  tbody.innerHTML = '';
+
+  tasksArr.forEach(taskObj => {
+    createRowForTask(taskObj, tasksArr);
+  });
+
+  updateOverallProgress();
+}
+
+function initializeTaskList() {
+  const form      = document.getElementById('taskForm');
+  const dateInput = document.getElementById('taskDate');
+  const fromInput = document.getElementById('taskFrom');
+  const toInput   = document.getElementById('taskTo');
+  const nameInput = document.getElementById('taskName');
+  if (!form || !dateInput || !fromInput || !toInput || !nameInput) return;
+
+  dateInput.value = new Date().toISOString().split('T')[0];
+
+  const now = new Date();
+  const hh = String(now.getHours()).padStart(2,'0');
+  const mm = String(now.getMinutes()).padStart(2,'0');
+  fromInput.value = `${hh}:${mm}`;
+  toInput.value   = `${hh}:${mm}`;
+
+  const tasksArr = loadTasksFromStorage();
+  renderTasksForSelectedDate(tasksArr);
+
+  dateInput.addEventListener('change', () => {
+    renderTasksForSelectedDate(tasksArr);
+  });
+
+  form.addEventListener('submit', evt => {
+    evt.preventDefault();
+    const dateVal = dateInput.value;
+    const fromVal = fromInput.value;
+    const toVal   = toInput.value;
+    const nameVal = nameInput.value.trim();
+    if (!dateVal || !fromVal || !toVal || !nameVal) {
+      alert('Please fill in Date, From, To, and Task.');
+      return;
+    }
+    
+    const newTask = {
+      id: Date.now().toString(),
+      date: dateVal,
+      from: fromVal,
+      to: toVal,
+      name: nameVal,
+      done: false
+    };
+
+    tasksArr.push(newTask);
+    saveTasksToStorage(tasksArr);
+    renderTasksForSelectedDate(tasksArr);
+
+    nameInput.value = '';
+    nameInput.focus();
   });
 }
 
@@ -455,69 +663,15 @@ modal.innerHTML = `
     modal.remove();
   });
 }
-  function wireUpNavLinks() {
-    document.querySelectorAll('nav a').forEach(a => {
-      a.onclick = async e => {
-        e.preventDefault();
-        const key = a.hash.slice(1);
 
-        document.querySelectorAll('nav a').forEach(link => link.classList.remove('active'));
-        a.classList.add('active');
+document.addEventListener('DOMContentLoaded', async () => {
+  await loadAnnouncements();
+  loadOtherSheets();
+  initSearchNav();
+  document.querySelector('nav a[href="#dashboard"]').click();
+  showLatestAnnouncementModal();
+});
 
-        const detailView = document.getElementById('detail-view');
-
-        if (key !== 'tasks') {
-
-          detailView.classList.remove('no-box');
-          const tpl = document.querySelector(`[data-template="${key}"]`);
-          if (tpl) detailView.innerHTML = tpl.innerHTML;
-        } else {
-
-          document.getElementById('tasks-link').click();
-        }
-      };
-    });
-  }
-
-  function wireUpTaskListLink() {
-    const taskListLink = document.getElementById('tasks-link');
-    if (!taskListLink) return;
-
-    taskListLink.addEventListener('click', (e) => {
-      e.preventDefault();
-
-      document.querySelectorAll('nav a').forEach(l => l.classList.remove('active'));
-      taskListLink.classList.add('active');
-
-      const detailView = document.getElementById('detail-view');
-      detailView.classList.add('iframe-container');
-
-      detailView.innerHTML = `
-        <iframe src="task-list.html" frameborder="0"></iframe>
-      `;
-    });
-  }
-
-  document.addEventListener('DOMContentLoaded', async () => {
-    await loadAnnouncements();
-    loadOtherSheets();
-    initSearchNav();
-    wireUpNavLinks();
-    wireUpTaskListLink();
-
-    const dashLink = document.getElementById('dashboard-link');
-    if (dashLink) {
-      dashLink.classList.add('active');
-      const dashTpl = document.querySelector('[data-template="dashboard"]');
-      if (dashTpl) {
-        const dv = document.getElementById('detail-view');
-        dv.classList.remove('no-box');
-        dv.innerHTML = dashTpl.innerHTML;
-      }
-    }
-
-    showLatestAnnouncementModal();
-  });
 </script>
 </body>
 </html>
