@@ -147,13 +147,9 @@
         </thead>
         <tbody></tbody>
       </table>
+      </div>
+    <div data-template="tasks"><h2>Task List</h2><ul><li>Day</li><li>List</li><li>Checkbox</li><li>Percentage Completion</li></ul></div>
     </div>
-    <div data-template="tasks"><h2>Task List</h2>
-    <label for="staffFilter" style="font-weight:600;margin-right:.5rem">Show tasks for:</label>
-    <select id="staffFilter" style="padding:.5rem;border:1px solid #ccc;border-radius:4px"><option value="">— Select staff —</option></select>
-    <table id="taskTable" style="width:100%;border-collapse:collapse;margin-top:1rem">
-      <thead></thead>
-      <tbody></tbody></table></div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/fuse.js/dist/fuse.min.js"></script>
@@ -171,22 +167,6 @@
   };
 
   const SHEET_ID      = '1zWuPjF-bTWWRTtbs9BLWJk3w4h7Xrpi5oqyUbi6Oqrg';
-  const TASK_SHEET_ID = '1uqcBvF391zu34vQY-orpiWpGqqcjqevtB3yFByd0VDI';
-  const STAFF_OPTIONS = [
-    { full: 'Summary of Schedule',   tab: 'Summary of Schedule' },
-    { full: 'Marcus Bañez',          tab: 'Marcus' },
-    { full: 'Kathleen Delos Santos', tab: 'Kath' },
-    { full: 'Christine Anastacio',   tab: 'Christine' },
-    { full: 'Mary Guray',            tab: 'Mary' },
-    { full: 'Jerrilyn Alarma',       tab: 'Jeh' },
-    { full: 'Shari Kristine Torres', tab: 'Shari' },
-    { full: 'Hanna Ranario',         tab: 'Hanna' },
-    { full: 'Daricalyn Rosales',     tab: 'Daricalyn' },
-    { full: 'Hyacinth Mae Cipriano', tab: 'Hyacinth' },
-    { full: 'Cheztierlee Arlos',     tab: 'Chez' },
-    { full: 'Daryl Pagilagan',       tab: 'Daryl' },
-    { full: 'Jovilyn Leonaras',      tab: 'Jovilyn' }
-  ];
 
   async function fetchSheetFromId(sheetId, tab) {
     const url = `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?sheet=${encodeURIComponent(tab)}&tqx=out:json`;
@@ -294,16 +274,6 @@
         });
       } catch (e) { console.error('Supplier load error', e); }
     }
-  
-  document.addEventListener('DOMContentLoaded', async () => {
-    const f = document.querySelector('#templates #staffFilter');
-    f.innerHTML = '<option value="">— Select staff —</option>';
-    STAFF_OPTIONS.forEach(o=>{
-      const opt = document.createElement('option');
-      opt.value = o.tab; opt.textContent = o.full;
-      f.append(opt);
-    });
-  });
 
   function initSearchNav(){
     const items = [];
@@ -327,11 +297,6 @@
           const key = fuse.search(q,{limit:10})[i].item.key;
           document.getElementById('detail-view').innerHTML =
             document.querySelector(`[data-template="${key}"]`).innerHTML;
-          if(key==='tasks'){
-            const filter = document.getElementById('staffFilter');
-            filter.value='Summary of Schedule';
-            filter.dispatchEvent(new Event('change',{bubbles:true}));
-          }
           inp.value=''; res.innerHTML='';
         };
       });
@@ -342,11 +307,7 @@
         const key = a.hash.slice(1);
         document.getElementById('detail-view').innerHTML =
           document.querySelector(`[data-template="${key}"]`).innerHTML;
-        if(key==='tasks'){
-          const filter = document.getElementById('staffFilter');
-          filter.value='Summary of Schedule';
-          filter.dispatchEvent(new Event('change',{bubbles:true}));
-        }
+
       };
     });
   }
@@ -426,12 +387,11 @@
       return;
     }
 
-    if(e.target.id==='processors-link'){
-      e.preventDefault();
-      document.getElementById('detail-view').innerHTML = `
-        <iframe src="processors.html" title="PO Processors"style="width:100%;height:100vh;border:0;min-height:600px"></iframe>`;
-      return;
-    }
+    if (e.target.id === 'processors-link') {
+    e.preventDefault();
+    window.open('processors.html', '_blank');
+    return;
+  }
 
   if (e.target.matches('.ann-link')) {
     e.preventDefault();
