@@ -152,31 +152,31 @@
   <h2>Task List</h2>
   <form id="taskForm" style="display:flex; gap:0.5rem; align-items:center; margin-bottom:1rem;">
     <input type="date"id="taskDate"required style="padding:0.5rem; border:1px solid #ccc; border-radius:4px;"/>
-    <input type="time"id="taskTime"required style="padding:0.5rem; border:1px solid #ccc; border-radius:4px;"/>
+    <input type="time"id="taskFrom"required style="padding:0.5rem; border:1px solid #ccc; border-radius:4px;"/>
+    <input type="time"id="taskTo"required style="padding:0.5rem; border:1px solid #ccc; border-radius:4px;"/>
     <input type="text"id="taskName"placeholder="Task description"required style="flex:1; padding:0.5rem; border:1px solid #ccc; border-radius:4px;"/>
     <button type="submit"style="padding:0.5rem 1rem; background:var(--accent); color:#fff; border:none; border-radius:4px; cursor:pointer;">Add</button>
   </form>
-
   <div id="overallProgressContainer" style="margin-bottom:1rem;">
     <div style="display:flex; align-items:center; justify-content:space-between;">
       <span style="font-weight:600;">Progress:</span>
       <span id="overallProgressText" style="font-weight:600;">0%</span>
     </div>
-    <div style="width:100%;height:12px;background:#e0e0e0;border-radius:6px;overflow:hidden;margin-top:4px;">
-      <div id="overallProgressBar" style="width:0%;height:100%;background:var(--accent);transition: width 0.3s ease;"></div>
+    <div style="width:100%; height:12px; background:#e0e0e0; border-radius:6px; overflow:hidden; margin-top:4px;">
+      <div
+        id="overallProgressBar"
+        style="width:0%; height:100%; background:var(--accent); transition: width 0.3s ease;"
+      ></div>
     </div>
   </div>
-
   <table id="taskTable" style="width:100%; border-collapse:collapse;">
-    <thead>
-      <tr>
+    <thead><tr>
         <th style="padding:0.5rem; border:1px solid #ddd; text-align:left;">Date</th>
         <th style="padding:0.5rem; border:1px solid #ddd; text-align:left;">Time</th>
         <th style="padding:0.5rem; border:1px solid #ddd; text-align:left;">Task</th>
         <th style="padding:0.5rem; border:1px solid #ddd; text-align:center;">Done</th>
         <th style="padding:0.5rem; border:1px solid #ddd; text-align:center;">Delete</th>
-      </tr>
-    </thead>
+      </tr></thead>
     <tbody></tbody>
   </table>
 </div>
@@ -186,16 +186,23 @@
 <script src="https://cdn.jsdelivr.net/npm/fuse.js/dist/fuse.min.js"></script>
   
 <script>
-  const parseGoogleDate = s => {
-    const m = /^Date\(([\d,]+)\)$/.exec(s);
-    return m ? new Date(...m[1].split(',').map(Number)) : new Date(s);
-  };
-  const formatTimestamp = d => {
-    let h = d.getHours(), ampm = h < 12 ? 'AM' : 'PM';
-    h = h % 12 || 12;
-    const pad = n => String(n).padStart(2,'0');
-    return `${pad(d.getMonth()+1)}/${pad(d.getDate())}/${d.getFullYear()} ${pad(h)}:${pad(d.getMinutes())} ${ampm}`;
-  };
+function to12Hour(hhmm) {
+  const [hh, mm] = hhmm.split(':').map(Number);
+  const suffix = hh >= 12 ? 'PM' : 'AM';
+  let hour12 = hh % 12;
+  if (hour12 === 0) hour12 = 12;
+  return `${hour12}:${String(mm).padStart(2,'0')} ${suffix}`; }
+
+const STORAGE_KEY = 'kp360_tasks';
+
+const parseGoogleDate = s => {
+  const m = /^Date\(([\d,]+)\)$/.exec(s);
+  return m ? new Date(...m[1].split(',').map(Number)) : new Date(s); };
+const formatTimestamp = d => {
+  let h = d.getHours(), ampm = h < 12 ? 'AM' : 'PM';
+  h = h % 12 || 12;
+  const pad = n => String(n).padStart(2,'0');
+  return `${pad(d.getMonth()+1)}/${pad(d.getDate())}/${d.getFullYear()} ${pad(h)}:${pad(d.getMinutes())} ${ampm}`; };
 
   const SHEET_ID      = '1zWuPjF-bTWWRTtbs9BLWJk3w4h7Xrpi5oqyUbi6Oqrg';
 
@@ -203,8 +210,7 @@
     const url = `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?sheet=${encodeURIComponent(tab)}&tqx=out:json`;
     const txt = await (await fetch(url)).text();
     const table = JSON.parse(txt.slice(47, -2)).table;
-    return table.rows.map(r => r.c.map(c => c && c.v));
-  }
+    return table.rows.map(r => r.c.map(c => c && c.v)); }
 
 async function loadAnnouncements() {
   try {
@@ -319,32 +325,41 @@ async function loadOtherSheets() {
 
 function initSearchNav() {
   const items = [];
-  document.querySelectorAll('nav a').forEach((a) =>
-    items.push({ key: a.hash.slice(1), title: a.textContent })
-  );
+  document.querySelectorAll('nav a').forEach((a) => {
+    items.push({ key: a.hash.slice(1), title: a.textContent });
+  });
   document.querySelectorAll('#templates [data-template]').forEach((div) => {
     const h2 = div.querySelector('h2');
-    if (h2) items.push({ key: div.dataset.template, title: h2.textContent });
+    if (h2) {
+      items.push({ key: div.dataset.template, title: h2.textContent });
+    }
   });
 
   const fuse = new Fuse(items, { keys: ['title'], threshold: 0.3 });
-  const inp = document.getElementById('searchInput'),
-        res = document.getElementById('searchResults');
-
+  const inp = document.getElementById('searchInput');
+  const res = document.getElementById('searchResults');
   inp.oninput = () => {
     const q = inp.value.trim();
-    res.innerHTML = q
-      ? fuse.search(q, { limit: 10 }).map((m) => `<li>${m.item.title}</li>`).join('')
-      : '';
-    res.querySelectorAll('li').forEach((li, i) => {
+    if (!q) {
+      res.innerHTML = '';
+      return;
+    }
+
+    const matches = fuse.search(q, { limit: 10 });
+    res.innerHTML = matches
+      .map((m) => `<li>${m.item.title}</li>`)
+      .join('');
+
+ res.querySelectorAll('li').forEach((li, i) => {
       li.onclick = () => {
-        const key = fuse.search(q, { limit: 10 })[i].item.key;
+        const key = matches[i].item.key;
         document.getElementById('detail-view').innerHTML =
           document.querySelector(`[data-template="${key}"]`).innerHTML;
-
         if (key === 'tasks') {
           initializeTaskList();
         }
+        inp.value = '';
+        res.innerHTML = '';
       };
     });
   };
@@ -355,15 +370,15 @@ function initSearchNav() {
       const key = a.hash.slice(1);
       document.getElementById('detail-view').innerHTML =
         document.querySelector(`[data-template="${key}"]`).innerHTML;
-
       if (key === 'tasks') {
         initializeTaskList();
       }
+
+      inp.value = '';
+      res.innerHTML = '';
     };
   });
 }
-
-const STORAGE_KEY = 'kp360_tasks';
 
 function loadTasksFromStorage() {
   try {
@@ -387,8 +402,8 @@ function updateOverallProgress() {
   const tbody = document.querySelector('#taskTable tbody');
   if (!tbody) return;
 
-  const visibleRows = Array.from(tbody.querySelectorAll('tr'));
-  const total = visibleRows.length;
+  const rows = Array.from(tbody.querySelectorAll('tr'));
+  const total = rows.length;
   if (total === 0) {
     document.getElementById('overallProgressText').textContent = '0%';
     document.getElementById('overallProgressBar').style.width = '0%';
@@ -396,7 +411,7 @@ function updateOverallProgress() {
   }
 
   let completedCount = 0;
-  visibleRows.forEach((tr) => {
+  rows.forEach(tr => {
     const chk = tr.querySelector('input[type="checkbox"]');
     if (chk && chk.checked) completedCount++;
   });
@@ -408,28 +423,23 @@ function updateOverallProgress() {
 
 function createRowForTask(taskObj, tasksArr) {
   const selectedDate = document.getElementById('taskDate').value;
-  if (taskObj.date !== selectedDate) {
-    return;
-  }
-
+  if (taskObj.date !== selectedDate) return;
   const tbody = document.querySelector('#taskTable tbody');
   if (!tbody) return;
-
   const tr = document.createElement('tr');
   tr.dataset.taskId = taskObj.id;
-
   const tdDate = document.createElement('td');
   tdDate.textContent = taskObj.date;
   tdDate.style.padding = '0.5rem';
   tdDate.style.border = '1px solid #ddd';
   tr.appendChild(tdDate);
-
   const tdTime = document.createElement('td');
-  tdTime.textContent = taskObj.time;
+  const from12 = to12Hour(taskObj.from);
+  const to12   = to12Hour(taskObj.to);
+  tdTime.textContent = `${from12}–${to12}`;
   tdTime.style.padding = '0.5rem';
   tdTime.style.border = '1px solid #ddd';
   tr.appendChild(tdTime);
-
   const tdTask = document.createElement('td');
   tdTask.textContent = taskObj.name;
   tdTask.style.padding = '0.5rem';
@@ -447,12 +457,9 @@ function createRowForTask(taskObj, tasksArr) {
   chk.type = 'checkbox';
   chk.checked = taskObj.done;
   chk.addEventListener('change', () => {
-
     tdTask.style.textDecoration = chk.checked ? 'line-through' : 'none';
-
     taskObj.done = chk.checked;
     saveTasksToStorage(tasksArr);
-
     updateOverallProgress();
   });
   tdDone.appendChild(chk);
@@ -462,24 +469,21 @@ function createRowForTask(taskObj, tasksArr) {
   tdDel.style.textAlign = 'center';
   tdDel.style.padding = '0.5rem';
   tdDel.style.border = '1px solid #ddd';
-
   const delBtn = document.createElement('button');
   delBtn.textContent = '🗑️';
+  delBtn.title = 'Delete this task';
   delBtn.style.cursor = 'pointer';
   delBtn.style.background = 'none';
   delBtn.style.border = 'none';
   delBtn.style.fontSize = '1rem';
-  delBtn.title = 'Delete this task';
   delBtn.addEventListener('click', () => {
-
     tr.remove();
 
-    const idx = tasksArr.findIndex((t) => t.id === taskObj.id);
+    const idx = tasksArr.findIndex(t => t.id === taskObj.id);
     if (idx > -1) {
       tasksArr.splice(idx, 1);
       saveTasksToStorage(tasksArr);
     }
-
     updateOverallProgress();
   });
   tdDel.appendChild(delBtn);
@@ -491,10 +495,9 @@ function createRowForTask(taskObj, tasksArr) {
 function renderTasksForSelectedDate(tasksArr) {
   const tbody = document.querySelector('#taskTable tbody');
   if (!tbody) return;
-
   tbody.innerHTML = '';
 
-  tasksArr.forEach((taskObj) => {
+  tasksArr.forEach(taskObj => {
     createRowForTask(taskObj, tasksArr);
   });
 
@@ -504,39 +507,42 @@ function renderTasksForSelectedDate(tasksArr) {
 function initializeTaskList() {
   const form      = document.getElementById('taskForm');
   const dateInput = document.getElementById('taskDate');
-  const timeInput = document.getElementById('taskTime');
+  const fromInput = document.getElementById('taskFrom');
+  const toInput   = document.getElementById('taskTo');
   const nameInput = document.getElementById('taskName');
-
-  if (!form || !dateInput || !timeInput || !nameInput) return;
+  if (!form || !dateInput || !fromInput || !toInput || !nameInput) return;
 
   dateInput.value = new Date().toISOString().split('T')[0];
+
   const now = new Date();
-  const hh = String(now.getHours()).padStart(2, '0');
-  const mm = String(now.getMinutes()).padStart(2, '0');
-  timeInput.value = hh + ':' + mm;
+  const hh = String(now.getHours()).padStart(2,'0');
+  const mm = String(now.getMinutes()).padStart(2,'0');
+  fromInput.value = `${hh}:${mm}`;
+  toInput.value   = `${hh}:${mm}`;
 
   const tasksArr = loadTasksFromStorage();
-
   renderTasksForSelectedDate(tasksArr);
 
   dateInput.addEventListener('change', () => {
     renderTasksForSelectedDate(tasksArr);
   });
 
-  form.addEventListener('submit', (evt) => {
+  form.addEventListener('submit', evt => {
     evt.preventDefault();
     const dateVal = dateInput.value;
-    const timeVal = timeInput.value;
+    const fromVal = fromInput.value;
+    const toVal   = toInput.value;
     const nameVal = nameInput.value.trim();
-    if (!dateVal || !timeVal || !nameVal) {
-      alert('Please fill in Date, Time, and Task.');
+    if (!dateVal || !fromVal || !toVal || !nameVal) {
+      alert('Please fill in Date, From, To, and Task.');
       return;
     }
-
+    
     const newTask = {
       id: Date.now().toString(),
       date: dateVal,
-      time: timeVal,
+      from: fromVal,
+      to: toVal,
       name: nameVal,
       done: false
     };
@@ -544,6 +550,7 @@ function initializeTaskList() {
     tasksArr.push(newTask);
     saveTasksToStorage(tasksArr);
     renderTasksForSelectedDate(tasksArr);
+
     nameInput.value = '';
     nameInput.focus();
   });
@@ -657,11 +664,10 @@ modal.innerHTML = `
 
 document.addEventListener('DOMContentLoaded', async () => {
   await loadAnnouncements();
-  showLatestAnnouncementModal();
   loadOtherSheets();
   initSearchNav();
-
   document.querySelector('nav a[href="#dashboard"]').click();
+  showLatestAnnouncementModal();
 });
 
 </script>
