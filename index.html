@@ -148,8 +148,35 @@
         <tbody></tbody>
       </table>
       </div>
-    <div data-template="tasks"><h2>Task List</h2><ul><li>Day</li><li>List</li><li>Checkbox</li><li>Percentage Completion</li></ul></div>
+<div data-template="tasks">
+  <h2>Task List</h2>
+  <div id="overallProgressContainer" style="margin-bottom:1rem;">
+    <div style="display:flex; align-items:center; justify-content:space-between;">
+      <span style="font-weight:600;">Overall Progress:</span>
+      <span id="overallProgressText" style="font-weight:600;">0%</span>
     </div>
+    <div style="width:100%;height:12px;background:#e0e0e0;border-radius:6px;overflow:hidden;margin-top:4px;">
+      <div id="overallProgressBar" style="width:0%;height:100%;background:var(--accent);transition: width 0.3s ease;
+        "></div>
+    </div>
+  </div>
+  <form id="taskForm" style="display:flex; gap:0.5rem; align-items:center; margin-bottom:1rem;">
+    <input type="date"id="taskDate"required style="padding:0.5rem; border:1px solid #ccc; border-radius:4px;"/>
+    <input type="time"id="taskTime"required style="padding:0.5rem; border:1px solid #ccc; border-radius:4px;"/>
+    <input type="text"id="taskName"placeholder="Task description"required style="flex:1; padding:0.65rem; border:1px solid #ccc; border-radius:4px;"/>
+    <button type="submit"style="padding:0.5rem 1rem; background:var(--accent); color:#fff; border:none; border-radius:4px;cursor:pointer;">Add</button>
+  </form>
+  <table id="taskTable" style="width:100%; border-collapse:collapse;">
+    <thead><tr>
+        <th style="padding:0.5rem; border:1px solid #ddd; text-align:left;">Date</th>
+        <th style="padding:0.5rem; border:1px solid #ddd; text-align:left;">Time</th>
+        <th style="padding:0.5rem; border:1px solid #ddd; text-align:left;">Task</th>
+        <th style="padding:0.5rem; border:1px solid #ddd; text-align:center;">Done</th>
+      </tr></thead>
+    <tbody></tbody>
+  </table>
+</div>
+</div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/fuse.js/dist/fuse.min.js"></script>
@@ -286,76 +313,140 @@ async function loadOtherSheets() {
       } catch (e) { console.error('Supplier load error', e); }
     }
 
-  function initSearchNav(){
-    const items = [];
-    document.querySelectorAll('nav a').forEach(a=>
-      items.push({key:a.hash.slice(1),title:a.textContent})
-    );
-    document.querySelectorAll('#templates [data-template]').forEach(div=>{
-      const h2 = div.querySelector('h2');
-      if(h2) items.push({key:div.dataset.template,title:h2.textContent});
-    });
-    const fuse = new Fuse(items,{keys:['title'],threshold:0.3});
-    const inp = document.getElementById('searchInput'),
-          res = document.getElementById('searchResults');
-    inp.oninput = () => {
-      const q = inp.value.trim();
-      res.innerHTML = q
-        ? fuse.search(q,{limit:10}).map(m=>`<li>${m.item.title}</li>`).join('')
-        : '';
-      res.querySelectorAll('li').forEach((li,i)=>{
-        li.onclick = () => {
-          const key = fuse.search(q,{limit:10})[i].item.key;
-          document.getElementById('detail-view').innerHTML =
-            document.querySelector(`[data-template="${key}"]`).innerHTML;
-          inp.value=''; res.innerHTML='';
-        };
-      });
-    };
-    document.querySelectorAll('nav a').forEach(a=>{
-      a.onclick = e => {
-        e.preventDefault();
-        const key = a.hash.slice(1);
+function initSearchNav() {
+  const items = [];
+  document.querySelectorAll('nav a').forEach((a) =>
+    items.push({ key: a.hash.slice(1), title: a.textContent })
+  );
+  document.querySelectorAll('#templates [data-template]').forEach((div) => {
+    const h2 = div.querySelector('h2');
+    if (h2) items.push({ key: div.dataset.template, title: h2.textContent });
+  });
+
+  const fuse = new Fuse(items, { keys: ['title'], threshold: 0.3 });
+  const inp = document.getElementById('searchInput'),
+        res = document.getElementById('searchResults');
+
+  inp.oninput = () => {
+    const q = inp.value.trim();
+    res.innerHTML = q
+      ? fuse.search(q, { limit: 10 }).map((m) => `<li>${m.item.title}</li>`).join('')
+      : '';
+    res.querySelectorAll('li').forEach((li, i) => {
+      li.onclick = () => {
+        const key = fuse.search(q, { limit: 10 })[i].item.key;
         document.getElementById('detail-view').innerHTML =
           document.querySelector(`[data-template="${key}"]`).innerHTML;
+
+        if (key === 'tasks') {
+          initializeTaskList();
+        }
+
+        inp.value = '';
+        res.innerHTML = '';
       };
     });
+  };
+
+  document.querySelectorAll('nav a').forEach((a) => {
+    a.onclick = (e) => {
+      e.preventDefault();
+      const key = a.hash.slice(1);
+      document.getElementById('detail-view').innerHTML =
+        document.querySelector(`[data-template="${key}"]`).innerHTML;
+
+      if (key === 'tasks') {
+        initializeTaskList();
+      }
+    };
+  });
+}
+
+function updateOverallProgress() {
+  const tbody = document.querySelector('#taskTable tbody');
+  if (!tbody) return;
+
+  const rows = Array.from(tbody.querySelectorAll('tr'));
+  const totalTasks = rows.length;
+  if (totalTasks === 0) {
+    document.getElementById('overallProgressText').textContent = '0%';
+    document.getElementById('overallProgressBar').style.width = '0%';
+    return;
   }
 
-  document.body.addEventListener('change', async e=>{
-    if(e.target.id!=='staffFilter') return;
-    const tab   = e.target.value;
-    const thead = document.querySelector('#taskTable thead');
-    const tbody = document.querySelector('#taskTable tbody');
-    thead.innerHTML=''; tbody.innerHTML='';
-    if(!tab) return;
-    try {
-      const rows = await fetchSheetFromId(TASK_SHEET_ID,tab);
-      if(rows.length<2) return;
-      const header = rows[1];
-      let last = header.length-1;
-      while(last>=0 && !header[last]?.toString().trim()) last--;
-      if(last<0) return;
-      const trH = document.createElement('tr');
-      for(let i=0;i<=last;i++){
-        if(!header[i]?.toString().trim()) continue;
-        const th = document.createElement('th');
-        th.textContent = header[i];
-        trH.appendChild(th);
-      }
-      thead.appendChild(trH);
-      rows.slice(2).forEach(r=>{
-        const tr = document.createElement('tr');
-        for(let i=0;i<=last;i++){
-          if(!header[i]?.toString().trim()) continue;
-          const td = document.createElement('td');
-          td.textContent = r[i] ?? '';
-          tr.appendChild(td);
-        }
-        tbody.appendChild(tr);
-      });
-    } catch(err){ console.error(err) }
+  let completed = 0;
+  rows.forEach((tr) => {
+    const chk = tr.querySelector('input[type="checkbox"]');
+    if (chk && chk.checked) completed++;
   });
+
+  const percent = Math.round((completed / totalTasks) * 100);
+  document.getElementById('overallProgressText').textContent = percent + '%';
+  document.getElementById('overallProgressBar').style.width = percent + '%';
+}
+
+function initializeTaskList() {
+  const form      = document.getElementById('taskForm');
+  const dateInput = document.getElementById('taskDate');
+  const nameInput = document.getElementById('taskName');
+  const progInput = document.getElementById('taskProgress');
+  const tbody     = document.querySelector('#taskTable tbody');
+
+  if (!form || !dateInput || !nameInput || !progInput || !tbody) return;
+
+  const today = new Date().toISOString().split('T')[0];
+  dateInput.value = today;
+
+  form.addEventListener('submit', (evt) => {
+    evt.preventDefault();
+
+    const dateVal = dateInput.value;
+    const nameVal = nameInput.value.trim();
+    const progVal = parseInt(progInput.value, 10);
+
+    if (!dateVal || !nameVal || isNaN(progVal) || progVal < 0 || progVal > 100) {
+      alert('Please fill all fields and ensure 0≤%≤100.');
+      return;
+    }
+
+    const tr = document.createElement('tr');
+    const tdDate = document.createElement('td');
+    tdDate.textContent = dateVal;
+    tdDate.style.padding = '0.5rem';
+    tdDate.style.border = '1px solid #ddd';
+    tr.appendChild(tdDate);
+    const tdTask = document.createElement('td');
+    tdTask.textContent = nameVal;
+    tdTask.style.padding = '0.5rem';
+    tdTask.style.border = '1px solid #ddd';
+    tr.appendChild(tdTask);
+    const tdDone = document.createElement('td');
+    tdDone.style.textAlign = 'center';
+    tdDone.style.padding = '0.5rem';
+    tdDone.style.border = '1px solid #ddd';
+    const chk = document.createElement('input');
+    chk.type = 'checkbox';
+    chk.addEventListener('change', () => {
+      tdTask.style.textDecoration = chk.checked ? 'line-through' : 'none';
+      updateOverallProgress();
+    });
+    tdDone.appendChild(chk);
+    tr.appendChild(tdDone);
+    const tdProg = document.createElement('td');
+    tdProg.style.textAlign = 'right';
+    tdProg.style.padding = '0.5rem';
+    tdProg.style.border = '1px solid #ddd';
+    tdProg.textContent = progVal + '%';
+    tr.appendChild(tdProg);
+    tbody.appendChild(tr);
+    nameInput.value = '';
+    progInput.value = '0';
+    nameInput.focus();
+
+    updateOverallProgress();
+  });
+  updateOverallProgress();
+}
 
   document.body.addEventListener('click', e=>{
 
@@ -421,25 +512,16 @@ modal.innerHTML = `
   document.body.append(modal);modal.querySelector('#closeAnnModal').onclick = () => modal.remove();return;}
   if (e.target.id === 'closeDetail') {document.querySelector('nav a[href="#dashboard"]').click();return;}
 
-      if (e.target.id !== 'supplierFilter') return;
+  if (e.target.id !== 'supplierFilter') return;
       const val = e.target.value;
       document.querySelectorAll('#supplierTable tbody tr').forEach(row => {
         row.style.display = (!val || row.cells[0].textContent === val) ? '' : 'none';
       });
     });
 
-document.addEventListener('DOMContentLoaded', async () => {
-  await loadAnnouncements();
-  showLatestAnnouncementModal();
-  loadOtherSheets();
-  initSearchNav();
-  document.querySelector('nav a[href="#dashboard"]').click();
-});
-
 function showLatestAnnouncementModal() {
   const listItems = document.querySelectorAll('#announcement-panel ul li');
   if (!listItems.length) return;
-
   const firstLi = listItems[0];
   const title   = firstLi.querySelector('.ann-link').dataset.title;
   const content = firstLi.querySelector('.ann-link').dataset.content;
@@ -470,6 +552,15 @@ modal.innerHTML = `
     modal.remove();
   });
 }
+
+document.addEventListener('DOMContentLoaded', async () => {
+  await loadAnnouncements();
+  showLatestAnnouncementModal();
+  loadOtherSheets();
+  initSearchNav();
+
+  document.querySelector('nav a[href="#dashboard"]').click();
+});
 
 </script>
 </body>
