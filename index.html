@@ -20,8 +20,10 @@
     nav h3{color:var(--accent);margin:0 0 1rem;font-size:1rem}
     nav a{display:block;color:#fff;text-decoration:none;padding:.5rem;border-radius:4px;margin-bottom:.25rem;transition:background .2s}
     nav a:hover{background:var(--accent);color:var(--primary)}
+    nav a.active {background: var(--accent);color: var(--primary);}
     .container{display:flex;margin-top:var(--header-height)}
     #detail-view{flex:1;padding:2rem;margin:0 320px 0 220px;background:#fff}
+    #detail-view.no-box {background: transparent;padding: 0;margin: 0 320px 0 220px;}
     #announcement-panel{position:fixed;top:var(--header-height);right:0;bottom:0;width:300px;background:#fff;border-left:1px solid #ddd;padding:1rem;overflow-y:auto}
     h2{margin-top:0;color:var(--primary);border-bottom:2px solid var(--accent);padding-bottom:.5rem}
     h3.section{margin-top:2rem;color:var(--primary);font-size:1.1rem;border-bottom:1px solid #ddd;padding-bottom:.25rem}
@@ -55,16 +57,18 @@
       <ul id="searchResults"></ul>
     </div>
   </header>
-  <nav><h3>Navigate</h3>
-    <a href="#dashboard">Dashboard</a>
-    <a href="#reports">Reports</a>
-    <a href="#suppliers">Supplier Contacts</a>
-    <a href="#trackers">Trackers</a>
-    <a href="#email">Email Templates</a>
-    <a href="#sops">SOPs</a>
-    <a href="#ratings">Tutorials</a>
-    <a href="#tasks" id="tasks-link">Task List</a>
-    <a href="#processors" id="processors-link">Processors</a></nav>
+<nav>
+  <h3>Navigate</h3>
+  <a href="#dashboard" id="dashboard-link">Dashboard</a>
+  <a href="#reports"   id="reports-link">Reports</a>
+  <a href="#suppliers" id="suppliers-link">Supplier Contacts</a>
+  <a href="#trackers"  id="trackers-link">Trackers</a>
+  <a href="#email"     id="email-link">Email Templates</a>
+  <a href="#sops"      id="sops-link">SOPs</a>
+  <a href="#ratings"   id="ratings-link">Tutorials</a>
+  <a href="#tasks"     id="tasks-link">Task List</a>
+  <a href="#processors" id="processors-link">Processors</a>
+</nav>
   
   <div class="container">
     <div id="detail-view">
@@ -284,44 +288,52 @@ async function loadOtherSheets() {
       } catch (e) { console.error('Supplier load error', e); }
     }
 
-function initSearchNav() {
-  const items = [];
-  document.querySelectorAll('nav a').forEach((a) => {
-    items.push({ key: a.hash.slice(1), title: a.textContent });
-  });
-  document.querySelectorAll('#templates [data-template]').forEach((div) => {
-    const h2 = div.querySelector('h2');
-    if (h2) {
-      items.push({ key: div.dataset.template, title: h2.textContent });
-    }
-  });
-
-  const fuse = new Fuse(items, { keys: ['title'], threshold: 0.3 });
-  const inp = document.getElementById('searchInput');
-  const res = document.getElementById('searchResults');
-  inp.oninput = () => {
-    const q = inp.value.trim();
-    if (!q) {
-      res.innerHTML = '';
-      return;
-    }
-
-    const matches = fuse.search(q, { limit: 10 });
-    res.innerHTML = matches
-      .map((m) => `<li>${m.item.title}</li>`)
-      .join('');
-
- res.querySelectorAll('li').forEach((li, i) => {
-      li.onclick = () => {
-        const key = matches[i].item.key;
-        document.getElementById('detail-view').innerHTML =
-          document.querySelector(`[data-template="${key}"]`).innerHTML;
-
-        inp.value = '';
-        res.innerHTML = '';
-      };
+  function initSearchNav() {
+    const items = [];
+    document.querySelectorAll('nav a').forEach(a => {
+      items.push({ key: a.hash.slice(1), title: a.textContent });
     });
-  };
+    document.querySelectorAll('#templates [data-template]').forEach(div => {
+      const h2 = div.querySelector('h2');
+      if (h2) {
+        items.push({ key: div.dataset.template, title: h2.textContent });
+      }
+    });
+    const fuse = new Fuse(items, { keys: ['title'], threshold: 0.3 });
+    const inp = document.getElementById('searchInput');
+    const res = document.getElementById('searchResults');
+
+    inp.oninput = () => {
+      const q = inp.value.trim();
+      if (!q) {
+        res.innerHTML = '';
+        return;
+      }
+      const matches = fuse.search(q, { limit: 10 });
+      res.innerHTML = matches.map(m => `<li>${m.item.title}</li>`).join('');
+
+      res.querySelectorAll('li').forEach((li, i) => {
+        li.onclick = () => {
+          const key = matches[i].item.key;
+          document.querySelectorAll('nav a').forEach(link => link.classList.remove('active'));
+          const navLink = document.getElementById(`${key}-link`);
+          if (navLink) navLink.classList.add('active');
+
+          if (key === 'tasks') {
+            document.getElementById('tasks-link').click();
+          } else {
+            // Normal template injection
+            const detailView = document.getElementById('detail-view');
+            detailView.classList.remove('no-box');
+            const tpl = document.querySelector(`[data-template="${key}"]`);
+            if (tpl) detailView.innerHTML = tpl.innerHTML;
+          }
+
+          inp.value = '';
+          res.innerHTML = '';
+        };
+      });
+  	}
 
   document.querySelectorAll('nav a').forEach((a) => {
     a.onclick = (e) => {
@@ -441,36 +453,79 @@ modal.innerHTML = `
     modal.remove();
   });
 }
+  function wireUpNavLinks() {
+    document.querySelectorAll('nav a').forEach(a => {
+      a.onclick = async e => {
+        e.preventDefault();
+        const key = a.hash.slice(1);
+
+        document.querySelectorAll('nav a').forEach(link => link.classList.remove('active'));
+        a.classList.add('active');
+
+        const detailView = document.getElementById('detail-view');
+
+        if (key !== 'tasks') {
+
+          detailView.classList.remove('no-box');
+          const tpl = document.querySelector(`[data-template="${key}"]`);
+          if (tpl) detailView.innerHTML = tpl.innerHTML;
+        } else {
+
+          document.getElementById('tasks-link').click();
+        }
+      };
+    });
+  }
+
+  function wireUpTaskListLink() {
+    const taskListLink = document.getElementById('tasks-link');
+    if (!taskListLink) return;
+
+    taskListLink.onclick = async e => {
+      e.preventDefault();
+
+      document.querySelectorAll('nav a').forEach(link => link.classList.remove('active'));
+      taskListLink.classList.add('active');
+
+      const detailView = document.getElementById('detail-view');
+
+      detailView.classList.add('no-box');
+
+      try {
+        const resp = await fetch('task-list.html');
+        if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+        const htmlText = await resp.text();
+        detailView.innerHTML = htmlText;
+
+        if (typeof initializeTaskList === 'function') {
+          initializeTaskList();
+        }
+      } catch (err) {
+        console.error('Failed to load Task List page:', err);
+        alert('Sorry, could not load Task List at this time.');
+      }
+    };
+  }
 
   document.addEventListener('DOMContentLoaded', async () => {
     await loadAnnouncements();
     loadOtherSheets();
     initSearchNav();
-    document.querySelector('nav a[href="#dashboard"]').click();
-    showLatestAnnouncementModal();
+    wireUpNavLinks();
+    wireUpTaskListLink();
 
-    const taskListLink = document.getElementById('tasks-link');
-    if (taskListLink) {
-      taskListLink.addEventListener('click', async (e) => {
-        e.preventDefault();
-
-        try {
-          const resp = await fetch('task-list.html');
-          if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
-          const htmlText = await resp.text();
-
-          const detailView = document.getElementById('detail-view');
-          detailView.innerHTML = htmlText;
-
-          if (typeof initializeTaskList === 'function') {
-            initializeTaskList();
-          }
-        } catch (err) {
-          console.error('Failed to load Task List page:', err);
-          alert('Sorry, could not load Task List at this time.');
-        }
-      });
+    const dashLink = document.getElementById('dashboard-link');
+    if (dashLink) {
+      dashLink.classList.add('active');
+      const dashTpl = document.querySelector('[data-template="dashboard"]');
+      if (dashTpl) {
+        const dv = document.getElementById('detail-view');
+        dv.classList.remove('no-box');
+        dv.innerHTML = dashTpl.innerHTML;
+      }
     }
+
+    showLatestAnnouncementModal();
   });
 </script>
 </body>
