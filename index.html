@@ -24,6 +24,8 @@
     .container{display:flex;margin-top:var(--header-height)}
     #detail-view{flex:1;padding:2rem;margin:0 320px 0 220px;background:#fff}
     #detail-view.no-box {background: transparent;padding: 0;margin: 0 300px 0 220px;box-shadow: none;border-radius: 0 ;}
+    #detail-view.iframe-container { background: transparent;padding: 0;margin: 0 300px 0 220px;box-shadow: none;border-radius: 0;}
+    #detail-view.iframe-container iframe {width: 100%;height: calc(100vh - var(--header-height));border: 0;}
     #announcement-panel{position:fixed;top:var(--header-height);right:0;bottom:0;width:300px;background:#fff;border-left:1px solid #ddd;padding:1rem;overflow-y:auto}
     h2{margin-top:0;color:var(--primary);border-bottom:2px solid var(--accent);padding-bottom:.5rem}
     h3.section{margin-top:2rem;color:var(--primary);font-size:1.1rem;border-bottom:1px solid #ddd;padding-bottom:.25rem}
@@ -477,57 +479,24 @@ modal.innerHTML = `
     });
   }
 
-function wireUpTaskListLink() {
-  const taskListLink = document.getElementById('tasks-link');
-  if (!taskListLink) return;
+  function wireUpTaskListLink() {
+    const taskListLink = document.getElementById('tasks-link');
+    if (!taskListLink) return;
 
-  taskListLink.onclick = async e => {
-    e.preventDefault();
+    taskListLink.addEventListener('click', (e) => {
+      e.preventDefault();
 
-    document.querySelectorAll('nav a').forEach(link => link.classList.remove('active'));
-    taskListLink.classList.add('active');
+      document.querySelectorAll('nav a').forEach(l => l.classList.remove('active'));
+      taskListLink.classList.add('active');
 
-    const detailView = document.getElementById('detail-view');
-    detailView.classList.add('no-box');
+      const detailView = document.getElementById('detail-view');
+      detailView.classList.add('iframe-container');
 
-    try {
-      const resp = await fetch('task-list.html');
-      if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
-      const htmlText = await resp.text();
-
-      detailView.innerHTML = htmlText;
-
-      const temp = document.createElement('div');
-      temp.innerHTML = htmlText;
-
-      temp.querySelectorAll('script[src]').forEach(oldScript => {
-        const newScript = document.createElement('script');
-        newScript.src = oldScript.src;
-        Array.from(oldScript.attributes).forEach(attr => {
-          newScript.setAttribute(attr.name, attr.value);
-        });
-        document.getElementById('detail-view').appendChild(newScript);
-      });
-
-      temp.querySelectorAll('script:not([src])').forEach(oldScript => {
-        const inlineCode = oldScript.textContent;
-        const newScript  = document.createElement('script');
-        newScript.textContent = inlineCode;
-        document.getElementById('detail-view').appendChild(newScript);
-      });
-
-      if (typeof initializeTaskList === 'function') {
-        initializeTaskList();
-      }
-    } catch (err) {
-      console.error('Failed to load Task List:', err);
       detailView.innerHTML = `
-        <p style="color:red;">
-          Sorry, could not load <strong>Task List</strong> at this time.
-        </p>`;
-    }
-  };
-}
+        <iframe src="task-list.html" frameborder="0"></iframe>
+      `;
+    });
+  }
 
   document.addEventListener('DOMContentLoaded', async () => {
     await loadAnnouncements();
