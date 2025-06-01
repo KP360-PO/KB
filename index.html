@@ -20,6 +20,7 @@
     nav h3{color:var(--accent);margin:0 0 1rem;font-size:1rem}
     nav a{display:block;color:#fff;text-decoration:none;padding:.5rem;border-radius:4px;margin-bottom:.25rem;transition:background .2s}
     nav a:hover{background:var(--accent);color:var(--primary)}
+    nav a.active {background: var(--accent);color: var(--primary);}
     .container{display:flex;margin-top:var(--header-height)}
     #detail-view{flex:1;padding:2rem;margin:0 320px 0 220px;background:#fff}
     #announcement-panel{position:fixed;top:var(--header-height);right:0;bottom:0;width:300px;background:#fff;border-left:1px solid #ddd;padding:1rem;overflow-y:auto}
@@ -330,7 +331,7 @@ function initSearchNav() {
           document.getElementById('detail-view').innerHTML =
             document.querySelector(`[data-template="${key}"]`).innerHTML;
         }
-
+        setActiveTab(key);
         inp.value = '';
         res.innerHTML = '';
       };
@@ -349,10 +350,17 @@ function initSearchNav() {
         document.getElementById('detail-view').innerHTML =
           document.querySelector(`[data-template="${key}"]`).innerHTML;
       }
-
+      setActiveTab(key);
       inp.value = '';
       res.innerHTML = '';
     };
+  });
+}
+  
+function setActiveTab(key) {
+  document.querySelectorAll('nav a').forEach(a => {
+    const hash = a.getAttribute('href');
+    a.classList.toggle('active', hash === '#' + key);
   });
 }
 
@@ -465,6 +473,7 @@ modal.innerHTML = `
   document.addEventListener('DOMContentLoaded', () => {
     initSearchNav();
     document.querySelector('nav a[href="#dashboard"]').click();
+    setActiveTab('dashboard');
     loadAnnouncements().then(() => {
       setTimeout(() => {
         showLatestAnnouncementModal();
