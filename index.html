@@ -16,6 +16,10 @@
     #searchResults{position:absolute;top:110%;left:0;right:0;background:#fff;border:1px solid #ccc;border-radius:4px;list-style:none;margin:0;padding:0;max-height:250px;overflow-y:auto;z-index:1001}
     #searchResults li{padding:.5rem;cursor:pointer}
     #searchResults li:hover{background:var(--bg)}
+	  body.sidebar-collapsed nav {display: none;}
+	  body.sidebar-collapsed nav h3 {opacity: 0;height: 0;overflow: hidden;}
+	  body.sidebar-collapsed nav a {display: none;}
+	  body.sidebar-collapsed #detail-view {margin-left: 0;}
     nav{position:fixed;top:var(--header-height);left:0;bottom:0;width:220px;background:var(--primary);padding:1rem;overflow-y:auto}
     nav h3{color:var(--accent);margin:0 0 1rem;font-size:1rem}
     nav a{display:block;color:#fff;text-decoration:none;padding:.5rem;border-radius:4px;margin-bottom:.25rem;transition:background .2s}
@@ -47,8 +51,9 @@
     .actions a:hover{color:var(--accent)}
   </style>
 </head>
-<body>
+  <body class="sidebar-collapsed">
   <header>
+      <button id="sidebarToggle" aria-label="Toggle Sidebar"style="background:none; border:none; margin-right:1rem; cursor:pointer; font-size:1.3rem; color:var(--primary);">☰</button>
       <img src="https://raw.githubusercontent.com/KP360-PO/KB/fd14166375f22e5247635b52376a6d6c5807fd66/assets/photos/Default%20KarParts360%20LOGO%20Version%203.png" alt="Karparts360 Logo">
     <h1>Purchase Hub</h1>
     <div class="search-wrapper">
@@ -469,6 +474,10 @@ modal.innerHTML = `
     modal.remove();
   });
 }
+  const sidebarToggleBtn = document.getElementById('sidebarToggle');
+    sidebarToggleBtn.addEventListener('click', () => {
+    document.body.classList.toggle('sidebar-collapsed');
+});
 
   document.addEventListener('DOMContentLoaded', () => {
     initSearchNav();
