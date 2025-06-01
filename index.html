@@ -29,8 +29,8 @@
     table{width:100%;border-collapse:collapse;margin-top:1rem}
     th,td{border:1px solid #ddd;padding:.75rem;text-align:left}
     .cards-container.marketplace-performance {display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.2rem;}
-    .cards-container.marketplace-performance .card {height: 300px;display: flex;flex-direction: column;align-items: center;padding: 0.5rem;}
-    .cards-container.marketplace-performance .screenshot {max-height: 100%;max-width: 100%;object-fit: contain;border: 1px solid #ddd;background: #fff;}
+    .cards-container.marketplace-performance .card {max-width: none; width: auto;}
+    .cards-container.marketplace-performance .screenshot {width: 100%; height: auto; object-fit: contain;}
   	.cards-container.top-performers {display: flex;flex-wrap: nowrap;justify-content: center;gap: 2rem;margin-top: 2rem;overflow-x: auto;padding-bottom: 1rem;}
   	.cards-container.top-performers .performer {flex: 0 0 auto;text-align: center;}
   	.cards-container.top-performers .profile-pic {width: 100px;height: 100px;border-radius: 50%;object-fit: cover;display: block;margin: 0 auto;border: 3px solid var(--accent);}
