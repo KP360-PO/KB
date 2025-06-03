@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+  <title>Task List (Styled)</title>
+  <style>
+    :root {--primary: #333;--accent: #ffb900;--text: #4a4a4a;--bg: #f5f5f5;--header-height: 60px;}
+    *, *::before, *::after {box-sizing: border-box;}
+    body {margin: 0;padding: 0;font-family: 'Segoe UI', Tahoma, sans-serif;background: var(--bg);color: var(--text);}
+    #detail-view {background: #fff;padding: 2rem;margin: 2rem auto;max-width: 900px;border-radius: 8px;box-shadow: 0 2px 8px rgba(0,0,0,0.1);}
+    #detail-view h2 {margin-top: 0;margin-bottom: 1rem;font-size: 1.5rem;color: var(--primary);border-bottom: 2px solid var(--accent);padding-bottom: 0.25rem;}
+    form#taskForm {display: flex;flex-wrap: wrap;gap: 0.75rem;align-items: center;margin-bottom: 1.5rem;}
+    form#taskForm input[type="date"],
+    form#taskForm input[type="time"],
+    form#taskForm input[type="text"] {padding: 0.5rem 0.75rem;border: 1px solid #ccc;border-radius: 4px;font-size: 1rem;background: #fff;color: var(--text);height: 2.25rem;}
+    form#taskForm input[type="date"] {width: 140px;appearance: none;cursor: pointer;}
+    form#taskForm input[type="date"]::-webkit-calendar-picker-indicator {cursor: pointer;}
+    form#taskForm input[type="time"] {width: 120px;cursor: pointer;appearance: none;}
+    form#taskForm input[type="time"]::-webkit-calendar-picker-indicator {cursor: pointer;}
+    form#taskForm input[type="text"] {flex: 1;min-width: 180px;}
+    form#taskForm button {padding: 0 1rem;background: var(--accent);color: #fff;border: none;border-radius: 4px;cursor: pointer;font-size: 1rem;height: 2.25rem;white-space: nowrap;}
+    form#taskForm button:hover {opacity: 0.9;}
+    #overallProgressContainer {margin-bottom: 1.5rem;}
+    #overallProgressContainer > .label-bar {display: flex;align-items: center;justify-content: space-between;font-weight: 600;color: var(--primary);margin-bottom: 0.25rem;}
+    #overallProgressContainer .progress-track {width: 100%;height: 8px;background: #e0e0e0;border-radius: 4px;overflow: hidden;}
+    #overallProgressBar {width: 0%;height: 100%;background: var(--accent);transition: width 0.3s ease;}
+    table#taskTable {width: 100%;border-collapse: collapse;margin-top: 0.5rem;font-size: 0.95rem;}
+    table#taskTable thead {background: #fafafa;}
+    table#taskTable th,
+    table#taskTable td {border: 1px solid #ddd;padding: 0.5rem 0.75rem;text-align: left;}
+    table#taskTable th {font-weight: 600;color: var(--primary);}
+    table#taskTable tr:nth-child(even) {background: #fcfcfc;}
+    table#taskTable td.center,
+    table#taskTable th.center {text-align: center;}
+    button.delete-btn {background: none;border: none;font-size: 1.1rem;cursor: pointer;color: #b00;}
+    button.delete-btn:hover {color: #800;}
+  </style>
+</head>
+
+<body>
+<div data-template="tasks" style="background:#fff; padding:1.5rem 2rem 2rem 2rem;">
+
+  <h2 style="margin:0 0 1rem 0;font-size:1.5rem;color:#333;border-bottom:2px solid #ffb900;padding-bottom:0.25rem;">Task List</h2>
+  <form id="taskForm" style="display:flex;flex-wrap:wrap;gap:0.75rem;align-items:center;margin-bottom:1.5rem;">
+    
+    <input type="date"id="taskDate"required style="width:140px;padding:0.5rem 0.75rem;border:1px solid #ccc;border-radius:4px;background:#fff;color:#4a4a4a;font-size:.85rem;height:2.25rem;cursor:pointer;"/>
+
+    <input type="time"id="taskFrom"required style="width:120px;padding:0.5rem 0.75rem;border:1px solid #ccc;border-radius:4px;background:#fff;color:#4a4a4a;font-size:.85rem;height:2.25rem;cursor:pointer;"/>
+
+    <input type="time"id="taskTo"required style="width:120px;padding:0.5rem 0.75rem;border:1px solid #ccc;border-radius:4px;background:#fff;color:#4a4a4a;font-size:.85rem;height:2.25rem;cursor:pointer;"/>
+
+    <input type="text"id="taskName"placeholder="Task description"required style="flex:1;min-width:180px;padding:0.5rem 0.75rem;border:1px solid #ccc;border-radius:4px;background:#fff;color:#4a4a4a;font-size:.85rem;height:2.25rem;"/>
+    
+    <button type="submit" style="padding:0 1rem;background:#ffb900;color:#fff;border:none;border-radius:4px;cursor:pointer;font-size:.85rem;height:2.1rem;white-space:nowrap;">Add</button>
+  </form>
+  
+  <div id="overallProgressContainer" style="margin-bottom:1.5rem;">
+    <div style="display:flex;align-items:center;justify-content:space-between;font-weight:600;color:#333;margin-bottom:0.25rem;">
+      <span>Progress:</span>
+      <span id="overallProgressText">0%</span>
+    </div>
+    <div style="width:100%;height:8px;background:#e0e0e0;border-radius:4px;overflow:hidden;">
+      <div id="overallProgressBar" style="width:0%;height:100%;background:#ffb900;transition:width 0.3s ease;">
+      </div>
+    </div>
+  </div>
+
+  <table id="taskTable" style="width:100%;border-collapse:collapse;margin-top:0.5rem;font-size:0.95rem;">
+    <thead style="background:#fafafa;">
+      <tr>
+        <th style="padding:0.5rem 0.75rem; border:1px solid #ddd; font-weight:600; color:#333;">Date</th>
+        <th style="padding:0.5rem 0.75rem; border:1px solid #ddd; font-weight:600; color:#333;">Time</th>
+        <th style="padding:0.5rem 0.75rem; border:1px solid #ddd; font-weight:600; color:#333;">Task</th>
+        <th style="padding:0.5rem 0.75rem; border:1px solid #ddd; font-weight:600; color:#333; text-align:center;">Done</th>
+        <th style="padding:0.5rem 0.75rem; border:1px solid #ddd; font-weight:600; color:#333; text-align:center;">Delete</th>
+      </tr>
+    </thead>
+    <tbody>
+    </tbody>
+  </table>
+</div>
+
+<script>
+  function to12Hour(hhmm) {
+    const [hStr, mStr] = hhmm.split(':');
+    let hh = parseInt(hStr, 10);
+    const mm = parseInt(mStr, 10);
+    const suffix = hh >= 12 ? 'PM' : 'AM';
+    hh = hh % 12;
+    if (hh === 0) hh = 12;
+    return hh + ':' + String(mm).padStart(2, '0') + ' ' + suffix;
+  }
+
+  const STORAGE_KEY = 'kp360_tasks';
+  function loadTasksFromStorage() {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      return raw ? JSON.parse(raw) : [];
+    } catch (e) {
+      console.warn('Failed to parse tasks:', e);
+      return [];
+    }
+  }
+  function saveTasksToStorage(tasksArr) {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(tasksArr));
+    } catch (e) {
+      console.error('Failed to save tasks:', e);
+    }
+  }
+
+  function updateOverallProgress() {
+    const tbody = document.querySelector('#taskTable tbody');
+    const rows = Array.from(tbody.querySelectorAll('tr'));
+    const total = rows.length;
+    if (total === 0) {
+      document.getElementById('overallProgressText').textContent = '0%';
+      document.getElementById('overallProgressBar').style.width = '0%';
+      return;
+    }
+    let doneCount = 0;
+    rows.forEach((tr) => {
+      const chk = tr.querySelector('input[type="checkbox"]');
+      if (chk && chk.checked) doneCount++;
+    });
+    const pct = Math.round((doneCount / total) * 100);
+    document.getElementById('overallProgressText').textContent = pct + '%';
+    document.getElementById('overallProgressBar').style.width = pct + '%';
+  }
+
+  function createRowForTask(taskObj, tasksArr) {
+    const selectedDate = document.getElementById('taskDate').value;
+    if (taskObj.date !== selectedDate) return;
+
+    const tbody = document.querySelector('#taskTable tbody');
+    const tr = document.createElement('tr');
+    tr.dataset.taskId = taskObj.id;
+
+    const tdDate = document.createElement('td');
+    tdDate.textContent = taskObj.date;
+    tdDate.style.padding = '0.5rem 0.75rem';
+    tdDate.style.border = '1px solid #ddd';
+    tr.appendChild(tdDate);
+
+    const tdTime = document.createElement('td');
+    tdTime.textContent = to12Hour(taskObj.from) + '–' + to12Hour(taskObj.to);
+    tdTime.style.padding = '0.5rem 0.75rem';
+    tdTime.style.border = '1px solid #ddd';
+    tr.appendChild(tdTime);
+
+    const tdTask = document.createElement('td');
+    tdTask.textContent = taskObj.name;
+    tdTask.style.padding = '0.5rem 0.75rem';
+    tdTask.style.border = '1px solid #ddd';
+    if (taskObj.done) {
+      tdTask.style.textDecoration = 'line-through';
+    }
+    tr.appendChild(tdTask);
+
+    const tdDone = document.createElement('td');
+    tdDone.style.textAlign = 'center';
+    tdDone.style.padding = '0.5rem 0.75rem';
+    tdDone.style.border = '1px solid #ddd';
+    const chk = document.createElement('input');
+    chk.type = 'checkbox';
+    chk.checked = taskObj.done;
+    chk.addEventListener('change', () => {
+      tdTask.style.textDecoration = chk.checked ? 'line-through' : 'none';
+      taskObj.done = chk.checked;
+      saveTasksToStorage(tasksArr);
+      updateOverallProgress();
+    });
+    tdDone.appendChild(chk);
+    tr.appendChild(tdDone);
+
+    const tdDel = document.createElement('td');
+    tdDel.style.textAlign = 'center';
+    tdDel.style.padding = '0.5rem 0.75rem';
+    tdDel.style.border = '1px solid #ddd';
+    const btn = document.createElement('button');
+    btn.textContent = '🗑️';
+    btn.title = 'Delete this task';
+    btn.style.cursor = 'pointer';
+    btn.style.background = 'none';
+    btn.style.border = 'none';
+    btn.style.fontSize = '1rem';
+    btn.addEventListener('click', () => {
+      tr.remove();
+      const idx = tasksArr.findIndex((t) => t.id === taskObj.id);
+      if (idx > -1) {
+        tasksArr.splice(idx, 1);
+        saveTasksToStorage(tasksArr);
+      }
+      updateOverallProgress();
+    });
+    tdDel.appendChild(btn);
+    tr.appendChild(tdDel);
+
+    tbody.appendChild(tr);
+  }
+
+  function renderTasksForSelectedDate(tasksArr) {
+    const tbody = document.querySelector('#taskTable tbody');
+    tbody.innerHTML = '';
+    tasksArr.forEach((taskObj) => {
+      createRowForTask(taskObj, tasksArr);
+    });
+    updateOverallProgress();
+  }
+
+  function initializeTaskList() {
+    const form = document.getElementById('taskForm');
+    const dateInput = document.getElementById('taskDate');
+    const fromInput = document.getElementById('taskFrom');
+    const toInput = document.getElementById('taskTo');
+    const nameInput = document.getElementById('taskName');
+    if (!form || !dateInput || !fromInput || !toInput || !nameInput) return;
+
+    dateInput.value = new Date().toISOString().split('T')[0];
+
+    const now = new Date();
+    const hh = String(now.getHours()).padStart(2, '0');
+    const mm = String(now.getMinutes()).padStart(2, '0');
+    fromInput.value = `${hh}:${mm}`;
+    toInput.value = `${hh}:${mm}`;
+
+    const tasksArr = loadTasksFromStorage();
+    renderTasksForSelectedDate(tasksArr);
+
+    dateInput.addEventListener('change', () => {
+      renderTasksForSelectedDate(tasksArr);
+    });
+
+    form.addEventListener('submit', (evt) => {
+      evt.preventDefault();
+      const dateVal = dateInput.value;
+      const fromVal = fromInput.value;
+      const toVal = toInput.value;
+      const nameVal = nameInput.value.trim();
+      if (!dateVal || !fromVal || !toVal || !nameVal) {
+        alert('Please fill in Date, From, To, and Task.');
+        return;
+      }
+      const newTask = {
+        id: Date.now().toString(),
+        date: dateVal,
+        from: fromVal,
+        to: toVal,
+        name: nameVal,
+        done: false,
+      };
+      tasksArr.push(newTask);
+      saveTasksToStorage(tasksArr);
+      renderTasksForSelectedDate(tasksArr);
+      nameInput.value = '';
+      nameInput.focus();
+    });
+  }
+
+document.addEventListener('DOMContentLoaded', () => {
+    initializeTaskList();
+  });
+</script>
+</body>
+</html>
