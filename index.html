@@ -331,7 +331,7 @@ function initSearchNav() {
 
         if (key === 'tasks') {
           document.getElementById('detail-view').innerHTML =
-            `<div style="padding: 2rem;"><iframe src="task-list.html" style="width:100%; height:80vh; border:none;"></iframe></div>`;
+            `<iframe src="task-list.html" style="width:100%; height:80vh; border:none;"></iframe>`;
         } else {
           document.getElementById('detail-view').innerHTML =
             document.querySelector(`[data-template="${key}"]`).innerHTML;
