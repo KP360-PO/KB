@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1.0" />
-  <title>Staff Task Timeline (Auto-Reset Each Week)</title>
+  <title>Task List (Auto-Reset Each Week)</title>
   <style>
     :root {--primary: #333;--accent: #ffb900;--text: #4a4a4a;--bg: #f5f5f5;}
     *, *::before, *::after {box-sizing: border-box;}
@@ -28,8 +28,7 @@
 </head>
 
 <body>
-  <h2>Staff Task Timeline</h2>
-
+  <h2>Task List</h2>
   <form id="filterForm">
     <select id="staffSelect" required>
       <option value="" disabled selected>Loading staff names…</option>
@@ -64,7 +63,6 @@
   </table>
 
   <script>
-
     const SHEET_ID = '1uqcBvF391zu34vQY-orpiWpGqqcjqevtB3yFByd0VDI';
     const staffNames = [
       'Mary',
@@ -170,16 +168,93 @@
         return;
       }
 
-      currentRawRows.forEach(rowObj => {
-        const rawTime = (rowObj[timeKey] || '').toString().trim();
-        const rawTask = (rowObj[chosenDay] || '').toString().trim();
-        if (!rawTime || !rawTask) return;
+      let i = 0;
+      while (i < currentRawRows.length) {
+        const rowObj   = currentRawRows[i];
+        const rawTime  = (rowObj[timeKey]    || '').toString().trim();
+        const rawTask  = (rowObj[chosenDay]  || '').toString().trim();
 
-        const isOff = rawTask.trim().toUpperCase() === 'OFF';
-        const displayTime = isOff ? '' : to12Hour(rawTime);
-        const taskText = rawTask;
-        const taskKey = computeTaskKey(staffTab, chosenDay, rawTime, taskText);
-        const isDone = !!doneStates[taskKey];
+        if (!rawTask) {
+          i++;
+          continue;
+        }
+
+        if (rawTask.toUpperCase() === 'OFF') {
+          const taskKey = computeTaskKey(staffTab, chosenDay, rawTime, rawTask);
+          const isDone  = !!doneStates[taskKey];
+
+          const tr = document.createElement('tr');
+
+          const tdDay = document.createElement('td');
+          tdDay.textContent = chosenDay;
+          tdDay.style.padding = '0.5rem 0.75rem';
+          tdDay.style.border = '1px solid #ddd';
+          tr.appendChild(tdDay);
+
+          const tdTime = document.createElement('td');
+          tdTime.textContent = '';
+          tdTime.style.padding = '0.5rem 0.75rem';
+          tdTime.style.border = '1px solid #ddd';
+          tr.appendChild(tdTime);
+
+          const tdTask = document.createElement('td');
+          tdTask.textContent = rawTask;
+          tdTask.style.padding = '0.5rem 0.75rem';
+          tdTask.style.border = '1px solid #ddd';
+          if (isDone) tdTask.style.textDecoration = 'line-through';
+          tr.appendChild(tdTask);
+
+          const tdDone = document.createElement('td');
+          tdDone.style.textAlign = 'center';
+          tdDone.style.padding = '0.5rem 0.75rem';
+          tdDone.style.border = '1px solid #ddd';
+          const chk = document.createElement('input');
+          chk.type = 'checkbox';
+          chk.checked = isDone;
+          chk.addEventListener('change', () => {
+            tdTask.style.textDecoration = chk.checked ? 'line-through' : 'none';
+            doneStates[taskKey] = chk.checked;
+            saveDoneStates();
+            updateOverallProgress();
+          });
+          tdDone.appendChild(chk);
+          tr.appendChild(tdDone);
+
+          tbody.appendChild(tr);
+          i++;
+          continue;
+        }
+
+        let endIndex = i;
+        while (endIndex + 1 < currentRawRows.length) {
+          const nextRow  = currentRawRows[endIndex + 1];
+          const nextTask = (nextRow[chosenDay] || '').toString().trim();
+
+          if (nextTask === rawTask) {
+            endIndex++;
+          } else {
+            break;
+          }
+        }
+
+        const firstRawTime = currentRawRows[i][timeKey].trim();          
+        const lastRawTime  = currentRawRows[endIndex][timeKey].trim();     
+
+        let combinedRaw = '';
+        const splitDash = (str) => {
+          if (str.includes('–')) return str.split('–').map(s => s.trim());
+          if (str.includes('-')) return str.split('-').map(s => s.trim());
+          return [str, str];
+        };
+
+        const [firstStart] = splitDash(firstRawTime);
+        const [, lastEnd]  = splitDash(lastRawTime);
+        combinedRaw = `${firstStart}-${lastEnd}`;
+
+        const displayTime = to12Hour(combinedRaw);
+        const taskText    = rawTask; 
+        const taskKey     = computeTaskKey(staffTab, chosenDay, firstRawTime, taskText);
+        const isDone      = !!doneStates[taskKey];
 
         const tr = document.createElement('tr');
 
@@ -219,7 +294,9 @@
         tr.appendChild(tdDone);
 
         tbody.appendChild(tr);
-      });
+
+        i = endIndex + 1;
+      }
 
       updateOverallProgress();
     }
