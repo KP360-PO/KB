@@ -3,264 +3,341 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1.0" />
-  <title>Task List (Styled)</title>
+  <title>Staff Task Timeline (Auto-Reset Each Week)</title>
   <style>
-    :root {--primary: #333;--accent: #ffb900;--text: #4a4a4a;--bg: #f5f5f5;--header-height: 60px;}
+    :root {--primary: #333;--accent: #ffb900;--text: #4a4a4a;--bg: #f5f5f5;}
     *, *::before, *::after {box-sizing: border-box;}
-    body {margin: 0;padding: 0;font-family: 'Segoe UI', Tahoma, sans-serif;background: var(--bg);color: var(--text);}
-    #detail-view {background: #fff;padding: 2rem;margin: 2rem auto;max-width: 900px;border-radius: 8px;box-shadow: 0 2px 8px rgba(0,0,0,0.1);}
-    #detail-view h2 {margin-top: 0;margin-bottom: 1rem;font-size: 1.5rem;color: var(--primary);border-bottom: 2px solid var(--accent);padding-bottom: 0.25rem;}
-    form#taskForm {display: flex;flex-wrap: wrap;gap: 0.75rem;align-items: center;margin-bottom: 1.5rem;}
-    form#taskForm input[type="date"],
-    form#taskForm input[type="time"],
-    form#taskForm input[type="text"] {padding: 0.5rem 0.75rem;border: 1px solid #ccc;border-radius: 4px;font-size: 1rem;background: #fff;color: var(--text);height: 2.25rem;}
-    form#taskForm input[type="date"] {width: 140px;appearance: none;cursor: pointer;}
-    form#taskForm input[type="date"]::-webkit-calendar-picker-indicator {cursor: pointer;}
-    form#taskForm input[type="time"] {width: 120px;cursor: pointer;appearance: none;}
-    form#taskForm input[type="time"]::-webkit-calendar-picker-indicator {cursor: pointer;}
-    form#taskForm input[type="text"] {flex: 1;min-width: 180px;}
-    form#taskForm button {padding: 0 1rem;background: var(--accent);color: #fff;border: none;border-radius: 4px;cursor: pointer;font-size: 1rem;height: 2.25rem;white-space: nowrap;}
-    form#taskForm button:hover {opacity: 0.9;}
+    body {margin: 0;padding: 2rem;font-family: 'Segoe UI', Tahoma, sans-serif;background: var(--bg);color: var(--text);}
+    h2 {margin-top: 0;margin-bottom: 1rem;font-size: 1.5rem;color: var(--primary);border-bottom: 2px solid var(--accent);padding-bottom: 0.25rem;}
+    form#filterForm {display: flex;flex-wrap: wrap;gap: 0.75rem;align-items: center;margin-bottom: 1.5rem;}
+    form#filterForm select {padding: 0.5rem 0.75rem;border: 1px solid #ccc;border-radius: 4px;background: #fff;color: var(--text);font-size: 1rem;height: 2.25rem;cursor: pointer;}
+    form#filterForm select#staffSelect {width: 200px;}
+    form#filterForm select#taskDay {width: 150px;}
     #overallProgressContainer {margin-bottom: 1.5rem;}
     #overallProgressContainer > .label-bar {display: flex;align-items: center;justify-content: space-between;font-weight: 600;color: var(--primary);margin-bottom: 0.25rem;}
     #overallProgressContainer .progress-track {width: 100%;height: 8px;background: #e0e0e0;border-radius: 4px;overflow: hidden;}
     #overallProgressBar {width: 0%;height: 100%;background: var(--accent);transition: width 0.3s ease;}
     table#taskTable {width: 100%;border-collapse: collapse;margin-top: 0.5rem;font-size: 0.95rem;}
     table#taskTable thead {background: #fafafa;}
-    table#taskTable th,
-    table#taskTable td {border: 1px solid #ddd;padding: 0.5rem 0.75rem;text-align: left;}
+    table#taskTable th, table#taskTable td {border: 1px solid #ddd;padding: 0.5rem 0.75rem;text-align: left;}
     table#taskTable th {font-weight: 600;color: var(--primary);}
     table#taskTable tr:nth-child(even) {background: #fcfcfc;}
     table#taskTable td.center,
     table#taskTable th.center {text-align: center;}
-    button.delete-btn {background: none;border: none;font-size: 1.1rem;cursor: pointer;color: #b00;}
-    button.delete-btn:hover {color: #800;}
   </style>
 </head>
 
 <body>
-<div data-template="tasks" style="background:#fff; padding:1.5rem 2rem 2rem 2rem;">
+  <h2>Staff Task Timeline</h2>
 
-  <h2 style="margin:0 0 1rem 0;font-size:1.5rem;color:#333;border-bottom:2px solid #ffb900;padding-bottom:0.25rem;">Task List</h2>
-  <form id="taskForm" style="display:flex;flex-wrap:wrap;gap:0.75rem;align-items:center;margin-bottom:1.5rem;">
-    
-    <input type="date"id="taskDate"required style="width:140px;padding:0.5rem 0.75rem;border:1px solid #ccc;border-radius:4px;background:#fff;color:#4a4a4a;font-size:.85rem;height:2.25rem;cursor:pointer;"/>
+  <form id="filterForm">
+    <select id="staffSelect" required>
+      <option value="" disabled selected>Loading staff names…</option>
+    </select>
 
-    <input type="time"id="taskFrom"required style="width:120px;padding:0.5rem 0.75rem;border:1px solid #ccc;border-radius:4px;background:#fff;color:#4a4a4a;font-size:.85rem;height:2.25rem;cursor:pointer;"/>
-
-    <input type="time"id="taskTo"required style="width:120px;padding:0.5rem 0.75rem;border:1px solid #ccc;border-radius:4px;background:#fff;color:#4a4a4a;font-size:.85rem;height:2.25rem;cursor:pointer;"/>
-
-    <input type="text"id="taskName"placeholder="Task description"required style="flex:1;min-width:180px;padding:0.5rem 0.75rem;border:1px solid #ccc;border-radius:4px;background:#fff;color:#4a4a4a;font-size:.85rem;height:2.25rem;"/>
-    
-    <button type="submit" style="padding:0 1rem;background:#ffb900;color:#fff;border:none;border-radius:4px;cursor:pointer;font-size:.85rem;height:2.1rem;white-space:nowrap;">Add</button>
+    <select id="taskDay" required>
+      <option value="" disabled selected>Select Day</option>
+    </select>
   </form>
-  
-  <div id="overallProgressContainer" style="margin-bottom:1.5rem;">
-    <div style="display:flex;align-items:center;justify-content:space-between;font-weight:600;color:#333;margin-bottom:0.25rem;">
+
+  <div id="overallProgressContainer">
+    <div class="label-bar">
       <span>Progress:</span>
       <span id="overallProgressText">0%</span>
     </div>
-    <div style="width:100%;height:8px;background:#e0e0e0;border-radius:4px;overflow:hidden;">
-      <div id="overallProgressBar" style="width:0%;height:100%;background:#ffb900;transition:width 0.3s ease;">
-      </div>
+    <div class="progress-track">
+      <div id="overallProgressBar"></div>
     </div>
   </div>
 
-  <table id="taskTable" style="width:100%;border-collapse:collapse;margin-top:0.5rem;font-size:0.95rem;">
-    <thead style="background:#fafafa;">
+  <table id="taskTable">
+    <thead>
       <tr>
-        <th style="padding:0.5rem 0.75rem; border:1px solid #ddd; font-weight:600; color:#333;">Date</th>
-        <th style="padding:0.5rem 0.75rem; border:1px solid #ddd; font-weight:600; color:#333;">Time</th>
-        <th style="padding:0.5rem 0.75rem; border:1px solid #ddd; font-weight:600; color:#333;">Task</th>
-        <th style="padding:0.5rem 0.75rem; border:1px solid #ddd; font-weight:600; color:#333; text-align:center;">Done</th>
-        <th style="padding:0.5rem 0.75rem; border:1px solid #ddd; font-weight:600; color:#333; text-align:center;">Delete</th>
+        <th>Day</th>
+        <th>Time</th>
+        <th>Task</th>
+        <th class="center">Done</th>
       </tr>
     </thead>
     <tbody>
     </tbody>
   </table>
-</div>
 
-<script>
-  function to12Hour(hhmm) {
-    const [hStr, mStr] = hhmm.split(':');
-    let hh = parseInt(hStr, 10);
-    const mm = parseInt(mStr, 10);
-    const suffix = hh >= 12 ? 'PM' : 'AM';
-    hh = hh % 12;
-    if (hh === 0) hh = 12;
-    return hh + ':' + String(mm).padStart(2, '0') + ' ' + suffix;
-  }
+  <script>
 
-  const STORAGE_KEY = 'kp360_tasks';
-  function loadTasksFromStorage() {
-    try {
-      const raw = localStorage.getItem(STORAGE_KEY);
-      return raw ? JSON.parse(raw) : [];
-    } catch (e) {
-      console.warn('Failed to parse tasks:', e);
-      return [];
+    const SHEET_ID = '1uqcBvF391zu34vQY-orpiWpGqqcjqevtB3yFByd0VDI';
+    const staffNames = [
+      'Mary',
+      'Shari',
+      'Hanna',
+      'Jeh',
+      'Daryl',
+      'Hyacinth',
+      'Marcus',
+      'Jovilyn',
+      'Daricalyn',
+      'Chez',
+      'Christine',
+      'Kath'
+    ];
+
+    const STORAGE_KEY_DONE = 'kp360_done_states';
+    const STORAGE_KEY_WEEK = 'kp360_done_week';
+
+    let doneStates = {};
+    let currentRawRows = [];
+    let currentHeaders = [];
+    let timeKey = null;
+    let dayColumnKeys = [];
+
+    function getCurrentISOWeek() {
+      const now = new Date();
+      const d = new Date(Date.UTC(now.getFullYear(), now.getMonth(), now.getDate()));
+      const dayNum = d.getUTCDay() || 7;
+      d.setUTCDate(d.getUTCDate() + 4 - dayNum);
+      const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
+      const weekNo = Math.ceil((((d - yearStart) / 86400000) + 1) / 7);
+      return `${d.getUTCFullYear()}-${String(weekNo).padStart(2, '0')}`;
     }
-  }
-  function saveTasksToStorage(tasksArr) {
-    try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(tasksArr));
-    } catch (e) {
-      console.error('Failed to save tasks:', e);
-    }
-  }
 
-  function updateOverallProgress() {
-    const tbody = document.querySelector('#taskTable tbody');
-    const rows = Array.from(tbody.querySelectorAll('tr'));
-    const total = rows.length;
-    if (total === 0) {
-      document.getElementById('overallProgressText').textContent = '0%';
-      document.getElementById('overallProgressBar').style.width = '0%';
-      return;
-    }
-    let doneCount = 0;
-    rows.forEach((tr) => {
-      const chk = tr.querySelector('input[type="checkbox"]');
-      if (chk && chk.checked) doneCount++;
-    });
-    const pct = Math.round((doneCount / total) * 100);
-    document.getElementById('overallProgressText').textContent = pct + '%';
-    document.getElementById('overallProgressBar').style.width = pct + '%';
-  }
-
-  function createRowForTask(taskObj, tasksArr) {
-    const selectedDate = document.getElementById('taskDate').value;
-    if (taskObj.date !== selectedDate) return;
-
-    const tbody = document.querySelector('#taskTable tbody');
-    const tr = document.createElement('tr');
-    tr.dataset.taskId = taskObj.id;
-
-    const tdDate = document.createElement('td');
-    tdDate.textContent = taskObj.date;
-    tdDate.style.padding = '0.5rem 0.75rem';
-    tdDate.style.border = '1px solid #ddd';
-    tr.appendChild(tdDate);
-
-    const tdTime = document.createElement('td');
-    tdTime.textContent = to12Hour(taskObj.from) + '–' + to12Hour(taskObj.to);
-    tdTime.style.padding = '0.5rem 0.75rem';
-    tdTime.style.border = '1px solid #ddd';
-    tr.appendChild(tdTime);
-
-    const tdTask = document.createElement('td');
-    tdTask.textContent = taskObj.name;
-    tdTask.style.padding = '0.5rem 0.75rem';
-    tdTask.style.border = '1px solid #ddd';
-    if (taskObj.done) {
-      tdTask.style.textDecoration = 'line-through';
-    }
-    tr.appendChild(tdTask);
-
-    const tdDone = document.createElement('td');
-    tdDone.style.textAlign = 'center';
-    tdDone.style.padding = '0.5rem 0.75rem';
-    tdDone.style.border = '1px solid #ddd';
-    const chk = document.createElement('input');
-    chk.type = 'checkbox';
-    chk.checked = taskObj.done;
-    chk.addEventListener('change', () => {
-      tdTask.style.textDecoration = chk.checked ? 'line-through' : 'none';
-      taskObj.done = chk.checked;
-      saveTasksToStorage(tasksArr);
-      updateOverallProgress();
-    });
-    tdDone.appendChild(chk);
-    tr.appendChild(tdDone);
-
-    const tdDel = document.createElement('td');
-    tdDel.style.textAlign = 'center';
-    tdDel.style.padding = '0.5rem 0.75rem';
-    tdDel.style.border = '1px solid #ddd';
-    const btn = document.createElement('button');
-    btn.textContent = '🗑️';
-    btn.title = 'Delete this task';
-    btn.style.cursor = 'pointer';
-    btn.style.background = 'none';
-    btn.style.border = 'none';
-    btn.style.fontSize = '1rem';
-    btn.addEventListener('click', () => {
-      tr.remove();
-      const idx = tasksArr.findIndex((t) => t.id === taskObj.id);
-      if (idx > -1) {
-        tasksArr.splice(idx, 1);
-        saveTasksToStorage(tasksArr);
+    function resetIfNewWeek() {
+      const currentWeek = getCurrentISOWeek();
+      const savedWeek = localStorage.getItem(STORAGE_KEY_WEEK);
+      if (savedWeek !== currentWeek) {
+        localStorage.removeItem(STORAGE_KEY_DONE);
+        localStorage.setItem(STORAGE_KEY_WEEK, currentWeek);
+        doneStates = {};
       }
-      updateOverallProgress();
-    });
-    tdDel.appendChild(btn);
-    tr.appendChild(tdDel);
+    }
 
-    tbody.appendChild(tr);
-  }
+    function loadDoneStates() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY_DONE);
+        doneStates = raw ? JSON.parse(raw) : {};
+      } catch (e) {
+        doneStates = {};
+      }
+    }
 
-  function renderTasksForSelectedDate(tasksArr) {
-    const tbody = document.querySelector('#taskTable tbody');
-    tbody.innerHTML = '';
-    tasksArr.forEach((taskObj) => {
-      createRowForTask(taskObj, tasksArr);
-    });
-    updateOverallProgress();
-  }
+    function saveDoneStates() {
+      try {
+        localStorage.setItem(STORAGE_KEY_DONE, JSON.stringify(doneStates));
+      } catch (e) {
+        console.error('Failed to save doneStates:', e);
+      }
+    }
 
-  function initializeTaskList() {
-    const form = document.getElementById('taskForm');
-    const dateInput = document.getElementById('taskDate');
-    const fromInput = document.getElementById('taskFrom');
-    const toInput = document.getElementById('taskTo');
-    const nameInput = document.getElementById('taskName');
-    if (!form || !dateInput || !fromInput || !toInput || !nameInput) return;
+    function buildSheetURLForTab(tabName) {
+      const base = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq`;
+      const query = encodeURIComponent('SELECT *');
+      return `${base}?sheet=${encodeURIComponent(tabName)}&tq=${query}`;
+    }
 
-    dateInput.value = new Date().toISOString().split('T')[0];
+    function to12Hour(rawTime) {
+      if (!rawTime) return '';
+      let sep = null;
+      if (rawTime.includes('–')) sep = '–';
+      else if (rawTime.includes('-')) sep = '-';
+      if (sep) {
+        const [from, to] = rawTime.split(sep).map(s => s.trim());
+        return formatSingle(from) + '–' + formatSingle(to);
+      }
+      return formatSingle(rawTime.trim());
+    }
+    function formatSingle(hhmm) {
+      const [hStr, mStr] = hhmm.split(':');
+      if (hStr == null || mStr == null) return hhmm;
+      let hh = parseInt(hStr, 10);
+      const mm = parseInt(mStr, 10);
+      const suffix = hh >= 12 ? 'PM' : 'AM';
+      hh = hh % 12;
+      if (hh === 0) hh = 12;
+      return hh + ':' + String(mm).padStart(2, '0') + ' ' + suffix;
+    }
 
-    const now = new Date();
-    const hh = String(now.getHours()).padStart(2, '0');
-    const mm = String(now.getMinutes()).padStart(2, '0');
-    fromInput.value = `${hh}:${mm}`;
-    toInput.value = `${hh}:${mm}`;
+    function computeTaskKey(tabName, day, time, taskDesc) {
+      return `${tabName.trim()}||${day.trim()}||${time.trim()}||${taskDesc.trim()}`.toLowerCase();
+    }
 
-    const tasksArr = loadTasksFromStorage();
-    renderTasksForSelectedDate(tasksArr);
+    function renderTasksForStaffAndDay() {
+      const staffTab = document.getElementById('staffSelect').value;
+      const chosenDay = document.getElementById('taskDay').value;
+      const tbody = document.querySelector('#taskTable tbody');
+      tbody.innerHTML = '';
 
-    dateInput.addEventListener('change', () => {
-      renderTasksForSelectedDate(tasksArr);
-    });
-
-    form.addEventListener('submit', (evt) => {
-      evt.preventDefault();
-      const dateVal = dateInput.value;
-      const fromVal = fromInput.value;
-      const toVal = toInput.value;
-      const nameVal = nameInput.value.trim();
-      if (!dateVal || !fromVal || !toVal || !nameVal) {
-        alert('Please fill in Date, From, To, and Task.');
+      if (!staffTab || !chosenDay) {
+        updateOverallProgress();
         return;
       }
-      const newTask = {
-        id: Date.now().toString(),
-        date: dateVal,
-        from: fromVal,
-        to: toVal,
-        name: nameVal,
-        done: false,
-      };
-      tasksArr.push(newTask);
-      saveTasksToStorage(tasksArr);
-      renderTasksForSelectedDate(tasksArr);
-      nameInput.value = '';
-      nameInput.focus();
-    });
-  }
 
-document.addEventListener('DOMContentLoaded', () => {
-    initializeTaskList();
-  });
-</script>
+      currentRawRows.forEach(rowObj => {
+        const rawTime = (rowObj[timeKey] || '').toString().trim();
+        const rawTask = (rowObj[chosenDay] || '').toString().trim();
+        if (!rawTime || !rawTask) return;
+
+        const isOff = rawTask.trim().toUpperCase() === 'OFF';
+        const displayTime = isOff ? '' : to12Hour(rawTime);
+        const taskText = rawTask;
+        const taskKey = computeTaskKey(staffTab, chosenDay, rawTime, taskText);
+        const isDone = !!doneStates[taskKey];
+
+        const tr = document.createElement('tr');
+
+        const tdDay = document.createElement('td');
+        tdDay.textContent = chosenDay;
+        tdDay.style.padding = '0.5rem 0.75rem';
+        tdDay.style.border = '1px solid #ddd';
+        tr.appendChild(tdDay);
+
+        const tdTime = document.createElement('td');
+        tdTime.textContent = displayTime;
+        tdTime.style.padding = '0.5rem 0.75rem';
+        tdTime.style.border = '1px solid #ddd';
+        tr.appendChild(tdTime);
+
+        const tdTask = document.createElement('td');
+        tdTask.textContent = taskText;
+        tdTask.style.padding = '0.5rem 0.75rem';
+        tdTask.style.border = '1px solid #ddd';
+        if (isDone) tdTask.style.textDecoration = 'line-through';
+        tr.appendChild(tdTask);
+
+        const tdDone = document.createElement('td');
+        tdDone.style.textAlign = 'center';
+        tdDone.style.padding = '0.5rem 0.75rem';
+        tdDone.style.border = '1px solid #ddd';
+        const chk = document.createElement('input');
+        chk.type = 'checkbox';
+        chk.checked = isDone;
+        chk.addEventListener('change', () => {
+          tdTask.style.textDecoration = chk.checked ? 'line-through' : 'none';
+          doneStates[taskKey] = chk.checked;
+          saveDoneStates();
+          updateOverallProgress();
+        });
+        tdDone.appendChild(chk);
+        tr.appendChild(tdDone);
+
+        tbody.appendChild(tr);
+      });
+
+      updateOverallProgress();
+    }
+
+    function updateOverallProgress() {
+      const tbody = document.querySelector('#taskTable tbody');
+      const rows = Array.from(tbody.querySelectorAll('tr'));
+      const total = rows.length;
+      if (total === 0) {
+        document.getElementById('overallProgressText').textContent = '0%';
+        document.getElementById('overallProgressBar').style.width = '0%';
+        return;
+      }
+      let doneCount = 0;
+      rows.forEach(tr => {
+        const chk = tr.querySelector('input[type="checkbox"]');
+        if (chk && chk.checked) doneCount++;
+      });
+      const pct = Math.round((doneCount / total) * 100);
+      document.getElementById('overallProgressText').textContent = pct + '%';
+      document.getElementById('overallProgressBar').style.width = pct + '%';
+    }
+
+    async function fetchSheetTab(tabName) {
+      console.log(`Fetching data for tab: "${tabName}"`);
+      try {
+        const url = buildSheetURLForTab(tabName);
+        const resp = await fetch(url);
+        if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+        const text = await resp.text();
+
+        const jsonStr = text
+          .replace(/^[^\(]*\(/, '')
+          .replace(/\);?$/, '');
+        const data = JSON.parse(jsonStr);
+        const allRows = data.table.rows;
+
+        if (!allRows.length) {
+          console.warn(`Tab "${tabName}" has no data rows.`);
+          return { rawRows: [], headers: [] };
+        }
+
+        const tableAsArrays = allRows.map(r =>
+          r.c.map(cell => (cell && cell.v != null) ? cell.v.toString() : '')
+        );
+
+        const headerRow = tableAsArrays[0].map(h => h.trim());
+        currentHeaders = headerRow;
+        console.log(`Headers for "${tabName}":`, headerRow);
+
+        const timeIdx = headerRow.findIndex(h => h.toLowerCase() === 'time');
+        if (timeIdx < 0) {
+          throw new Error(`Tab "${tabName}": Could not find a "TIME" header in row 1.`);
+        }
+        timeKey = headerRow[timeIdx];
+
+        dayColumnKeys = headerRow
+          .filter((h, idx) => h !== '' && idx !== timeIdx)
+          .map(h => h.toUpperCase());
+        console.log(`Day columns detected for "${tabName}":`, dayColumnKeys);
+
+        const rawRows = [];
+        for (let i = 1; i < tableAsArrays.length; i++) {
+          const cells = tableAsArrays[i];
+          if (!cells[timeIdx] || !cells[timeIdx].trim()) continue;
+          const obj = {};
+          headerRow.forEach((hdr, colIdx) => {
+            obj[hdr] = (cells[colIdx] || '').trim();
+          });
+          rawRows.push(obj);
+        }
+        console.log(`Loaded ${rawRows.length} data rows (rows 2+) for "${tabName}".`);
+        return { rawRows, headers: headerRow };
+
+      } catch (err) {
+        console.error(`Error fetching/parsing tab "${tabName}":`, err);
+        return { rawRows: [], headers: [] };
+      }
+    }
+
+    document.addEventListener('DOMContentLoaded', async () => {
+      resetIfNewWeek();
+      loadDoneStates();
+
+      const staffSelect = document.getElementById('staffSelect');
+      const daySelect = document.getElementById('taskDay');
+
+      staffSelect.innerHTML = '';
+      staffSelect.appendChild(new Option('Select Staff', '', true, false));
+      staffNames.forEach(tab => {
+        const opt = new Option(tab, tab, false, false);
+        staffSelect.appendChild(opt);
+      });
+
+      staffSelect.addEventListener('change', async () => {
+        const chosenStaff = staffSelect.value;
+        if (!chosenStaff) return;
+
+        const { rawRows, headers } = await fetchSheetTab(chosenStaff);
+        currentRawRows = rawRows;
+        currentHeaders = headers;
+
+        daySelect.innerHTML = '';
+        daySelect.appendChild(new Option('Select Day', '', true, false));
+        dayColumnKeys.forEach(d => {
+          const opt = new Option(d, d, false, false);
+          daySelect.appendChild(opt);
+        });
+
+        renderTasksForStaffAndDay();
+      });
+
+      daySelect.addEventListener('change', () => {
+        if (currentRawRows.length && staffSelect.value) {
+          renderTasksForStaffAndDay();
+        }
+      });
+    });
+  </script>
 </body>
 </html>
