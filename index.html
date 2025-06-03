@@ -158,7 +158,7 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/fuse.js/dist/fuse.min.js"></script>
-  
+
 <script>
 function to12Hour(hhmm) {
   const [hh, mm] = hhmm.split(':').map(Number);
@@ -297,37 +297,101 @@ async function loadOtherSheets() {
       } catch (e) { console.error('Supplier load error', e); }
     }
 
-function initSearchNav() {
-  const items = [];
-  document.querySelectorAll('nav a').forEach((a) => {
-    items.push({ key: a.hash.slice(1), title: a.textContent });
-  });
-  document.querySelectorAll('#templates [data-template]').forEach((div) => {
-    const h2 = div.querySelector('h2');
-    if (h2) {
-      items.push({ key: div.dataset.template, title: h2.textContent });
+  function buildSearchItems() {
+    const itemsMap = new Map();
+
+    // 1. Nav links
+    document.querySelectorAll('nav a').forEach(a => {
+      const key = a.hash.slice(1);
+      const title = a.textContent.trim();
+      itemsMap.set(title, { type: 'nav', key, title });
+    });
+
+    // 2. Static templates (e.g., dashboard, reports, etc.)
+    document.querySelectorAll('#templates [data-template]').forEach(div => {
+      const key = div.dataset.template;
+      const h2 = div.querySelector('h2');
+      if (h2) {
+        const title = h2.textContent.trim();
+        itemsMap.set(title, { type: 'template', key, title });
+      }
+    });
+
+    // 3. Email templates (once they've been injected)
+    document.querySelectorAll('.email-template-link').forEach(el => {
+      const title = el.textContent.trim();
+      itemsMap.set(title, { type: 'email', element: el, title });
+    });
+
+    // 4. SOP links (once injected)
+    document.querySelectorAll('.sop-link').forEach(el => {
+      const title = el.dataset.title.trim();
+      itemsMap.set(title, { type: 'sop', element: el, title });
+    });
+
+    return Array.from(itemsMap.values());
+  }
+
+  function initSearchNav() {
+    let items = []; 
+    let fuse;
+
+    const inp = document.getElementById('searchInput');
+    const res = document.getElementById('searchResults');
+
+    function refreshIndex() {
+      items = buildSearchItems();
+      fuse = new Fuse(items, { keys: ['title'], threshold: 0.3 });
     }
-  });
 
-  const fuse = new Fuse(items, { keys: ['title'], threshold: 0.3 });
-  const inp = document.getElementById('searchInput');
-  const res = document.getElementById('searchResults');
+    // Rebuild index after dynamic sheets load
+    refreshIndex();
+    loadOtherSheets().then(() => {
+      // Delay slightly to ensure email/SOP links exist
+      setTimeout(refreshIndex, 200);
+    });
 
-  inp.oninput = () => {
-    const q = inp.value.trim();
-    if (!q) {
-      res.innerHTML = '';
-      return;
-    }
+    inp.oninput = () => {
+      const q = inp.value.trim();
+      if (!q) {
+        res.innerHTML = '';
+        return;
+      }
 
-    const matches = fuse.search(q, { limit: 10 });
-    res.innerHTML = matches
-      .map((m) => `<li>${m.item.title}</li>`)
-      .join('');
+      const matches = fuse.search(q, { limit: 10 });
+      res.innerHTML = matches
+        .map(m => `<li>${m.item.title}</li>`)
+        .join('');
 
-    res.querySelectorAll('li').forEach((li, i) => {
-      li.onclick = () => {
-        const key = matches[i].item.key;
+      res.querySelectorAll('li').forEach((li, i) => {
+        li.onclick = () => {
+          const { type, key, title, element } = matches[i].item;
+          if (type === 'nav') {
+            // Navigate to that section
+            document.querySelector(`nav a[href="#${key}"]`).click();
+          } else if (type === 'template') {
+            // Render static template
+            document.getElementById('detail-view').innerHTML =
+              document.querySelector(`[data-template="${key}"]`).innerHTML;
+            setActiveTab(key);
+          } else if (type === 'email') {
+            // Open email modal
+            element.click();
+          } else if (type === 'sop') {
+            // Open SOP modal
+            element.click();
+          }
+          inp.value = '';
+          res.innerHTML = '';
+        };
+      });
+    };
+
+    // Nav link clicks should clear search results
+    document.querySelectorAll('nav a').forEach(a => {
+      a.onclick = e => {
+        e.preventDefault();
+        const key = a.hash.slice(1);
 
         if (key === 'tasks') {
           document.getElementById('detail-view').innerHTML =
@@ -341,26 +405,7 @@ function initSearchNav() {
         res.innerHTML = '';
       };
     });
-  };
-
-  document.querySelectorAll('nav a').forEach((a) => {
-    a.onclick = (e) => {
-      e.preventDefault();
-      const key = a.hash.slice(1);
-
-      if (key === 'tasks') {
-        document.getElementById('detail-view').innerHTML =
-          `<iframe src="task-list.html" style="width:100%; height:80vh; border:none;"></iframe>`;
-      } else {
-        document.getElementById('detail-view').innerHTML =
-          document.querySelector(`[data-template="${key}"]`).innerHTML;
-      }
-      setActiveTab(key);
-      inp.value = '';
-      res.innerHTML = '';
-    };
-  });
-}
+  }
   
 function setActiveTab(key) {
   document.querySelectorAll('nav a').forEach(a => {
