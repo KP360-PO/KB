@@ -13,6 +13,7 @@
     form#filterForm select {padding: 0.5rem 0.75rem;border: 1px solid #ccc;border-radius: 4px;background: #fff;color: var(--text);font-size: 1rem;height: 2.25rem;cursor: pointer;}
     form#filterForm select#staffSelect {width: 220px;}
     form#filterForm select#taskDay {width: 150px;}
+    .hidden { display: none; }
     #overallProgressContainer {margin-bottom: 1.5rem;}
     #overallProgressContainer > .label-bar {display: flex;align-items: center;justify-content: space-between;font-weight: 600;color: var(--primary);margin-bottom: 0.25rem;}
     #overallProgressContainer .progress-track {width: 100%;height: 8px;background: #e0e0e0;border-radius: 4px;overflow: hidden;}
@@ -76,7 +77,7 @@
     const staffOptions = ['Summary of Schedule', ...staffNames];
 
     const STORAGE_KEY_DONE = 'kp360_done_states';
-    const STORAGE_KEY_WEEK = 'kp360_done_week';
+    const STORAGE_KEY_LAST_RESET = 'kp360_last_reset';
 
     let doneStates = {};
     let currentRawRows = [];
@@ -84,22 +85,76 @@
     let timeKey = null;
     let dayColumnKeys = [];
 
-    function getCurrentISOWeek() {
+    function resetIfPastSundayMidnightEST() {
       const now = new Date();
-      const d = new Date(Date.UTC(now.getFullYear(), now.getMonth(), now.getDate()));
-      const dayNum = d.getUTCDay() || 7;
-      d.setUTCDate(d.getUTCDate() + 4 - dayNum);
-      const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
-      const weekNo = Math.ceil((((d - yearStart) / 86400000) + 1) / 7);
-      return `${d.getUTCFullYear()}-${String(weekNo).padStart(2, '0')}`;
-    }
+      const fmtParts = new Intl.DateTimeFormat('en-US', {
+        timeZone: 'America/New_York',
+        hour12: false,
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+        weekday: 'long'
+      }).formatToParts(now);
 
-    function resetIfNewWeek() {
-      const currentWeek = getCurrentISOWeek();
-      const savedWeek = localStorage.getItem(STORAGE_KEY_WEEK);
-      if (savedWeek !== currentWeek) {
+      let y, M, d, H, m, s, wdayName;
+      fmtParts.forEach(p => {
+        if (p.type === 'year')        y = p.value;
+        else if (p.type === 'month')   M = p.value;
+        else if (p.type === 'day')     d = p.value;
+        else if (p.type === 'hour')    H = p.value;
+        else if (p.type === 'minute')  m = p.value;
+        else if (p.type === 'second')  s = p.value;
+        else if (p.type === 'weekday') wdayName = p.value;
+      });
+
+      const weekdayIndex = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday']
+                            .indexOf(wdayName);
+
+      const tzName = new Intl.DateTimeFormat('en-US', {
+        timeZone: 'America/New_York',
+        timeZoneName: 'short'
+      }).formatToParts(now).find(p => p.type === 'timeZoneName').value;
+      
+      const offsetHours = (tzName === 'EDT') ? 4 : 5;
+      const estNowAsUTC = new Date(Date.UTC(
+        Number(y),
+        Number(M) - 1,
+        Number(d),
+        Number(H) + offsetHours,
+        Number(m),
+        Number(s)
+      ));
+
+      const localDay = Number(d);
+      const sundayESTDay = localDay - weekdayIndex; 
+      const sundayESTYear  = Number(y);
+      const sundayESTMonth = Number(M) - 1;
+      const sundayESTDate  = sundayESTDay;
+
+      const sundayMidnightEST_asUTC = new Date(Date.UTC(
+        sundayESTYear,
+        sundayESTMonth,
+        sundayESTDate,
+        offsetHours,
+        0,
+        0
+      ));
+
+      const stored = localStorage.getItem(STORAGE_KEY_LAST_RESET);
+      if (!stored) {
         localStorage.removeItem(STORAGE_KEY_DONE);
-        localStorage.setItem(STORAGE_KEY_WEEK, currentWeek);
+        localStorage.setItem(STORAGE_KEY_LAST_RESET, sundayMidnightEST_asUTC.toISOString());
+        doneStates = {};
+        return;
+      }
+
+      const lastResetDate = new Date(stored);
+      if (sundayMidnightEST_asUTC.getTime() > lastResetDate.getTime()) {
+        localStorage.removeItem(STORAGE_KEY_DONE);
+        localStorage.setItem(STORAGE_KEY_LAST_RESET, sundayMidnightEST_asUTC.toISOString());
         doneStates = {};
       }
     }
@@ -154,10 +209,8 @@
     }
 
     function clearTable() {
-      const thead = document.querySelector('#taskTable thead');
-      const tbody = document.querySelector('#taskTable tbody');
-      thead.innerHTML = '';
-      tbody.innerHTML = '';
+      document.querySelector('#taskTable thead').innerHTML = '';
+      document.querySelector('#taskTable tbody').innerHTML = '';
     }
 
     function renderSummaryTable() {
@@ -168,7 +221,6 @@
 
       if (!currentHeaders.length) return;
 
-      // Build header row
       const headerRow = document.createElement('tr');
       currentHeaders.forEach(hdr => {
         const th = document.createElement('th');
@@ -177,7 +229,6 @@
       });
       thead.appendChild(headerRow);
 
-      // Build each data row
       currentRawRows.forEach(rowObj => {
         const tr = document.createElement('tr');
         currentHeaders.forEach(hdr => {
@@ -190,9 +241,9 @@
     }
 
     function renderTasksForStaffAndDay() {
-      const staffTab = document.getElementById('staffSelect').value;
+      const staffTab  = document.getElementById('staffSelect').value;
       const chosenDay = document.getElementById('taskDay').value;
-      const tbody = document.querySelector('#taskTable tbody');
+      const tbody     = document.querySelector('#taskTable tbody');
       tbody.innerHTML = '';
 
       if (!staffTab || !chosenDay) {
@@ -202,9 +253,9 @@
 
       let i = 0;
       while (i < currentRawRows.length) {
-        const rowObj   = currentRawRows[i];
-        const rawTime  = (rowObj[timeKey]    || '').toString().trim();
-        const rawTask  = (rowObj[chosenDay]  || '').toString().trim();
+        const rowObj  = currentRawRows[i];
+        const rawTime = (rowObj[timeKey]   || '').toString().trim();
+        const rawTask = (rowObj[chosenDay] || '').toString().trim();
 
         if (!rawTask) {
           i++;
@@ -261,7 +312,6 @@
         while (endIndex + 1 < currentRawRows.length) {
           const nextRow  = currentRawRows[endIndex + 1];
           const nextTask = (nextRow[chosenDay] || '').toString().trim();
-
           if (nextTask === rawTask) {
             endIndex++;
           } else {
@@ -269,8 +319,8 @@
           }
         }
 
-        const firstRawTime = currentRawRows[i][timeKey].trim();          
-        const lastRawTime  = currentRawRows[endIndex][timeKey].trim();     
+        const firstRawTime = currentRawRows[i][timeKey].trim();
+        const lastRawTime  = currentRawRows[endIndex][timeKey].trim();
 
         let combinedRaw = '';
         const splitDash = (str) => {
@@ -278,13 +328,12 @@
           if (str.includes('-')) return str.split('-').map(s => s.trim());
           return [str, str];
         };
-
         const [firstStart] = splitDash(firstRawTime);
         const [, lastEnd]  = splitDash(lastRawTime);
         combinedRaw = `${firstStart}-${lastEnd}`;
 
         const displayTime = to12Hour(combinedRaw);
-        const taskText    = rawTask; 
+        const taskText    = rawTask;
         const taskKey     = computeTaskKey(staffTab, chosenDay, firstRawTime, taskText);
         const isDone      = !!doneStates[taskKey];
 
@@ -386,7 +435,6 @@
             .filter((h, idx) => h !== '' && idx !== timeIdx)
             .map(h => h.toUpperCase());
         } else {
-
           timeKey = null;
           dayColumnKeys = [];
         }
@@ -400,7 +448,7 @@
           });
           rawRows.push(obj);
         }
-        console.log(`Loaded ${rawRows.length} data rows (rows 2+) for "${tabName}".`);
+        console.log(`Loaded ${rawRows.length} data rows for "${tabName}".`);
         return { rawRows, headers: headerRow };
 
       } catch (err) {
@@ -410,11 +458,12 @@
     }
 
     document.addEventListener('DOMContentLoaded', async () => {
-      resetIfNewWeek();
+
+      resetIfPastSundayMidnightEST();
       loadDoneStates();
 
       const staffSelect = document.getElementById('staffSelect');
-      const daySelect = document.getElementById('taskDay');
+      const daySelect   = document.getElementById('taskDay');
       const progressContainer = document.getElementById('overallProgressContainer');
 
       staffSelect.innerHTML = '';
@@ -431,6 +480,7 @@
         if (chosen === 'Summary of Schedule') {
           daySelect.classList.add('hidden');
           progressContainer.classList.add('hidden');
+
           const { rawRows, headers } = await fetchSheetTab('Summary of Schedule');
           currentRawRows = rawRows;
           currentHeaders = headers;
@@ -468,7 +518,7 @@
           const thead = document.querySelector('#taskTable thead');
           thead.innerHTML = '';
           const headerRow = document.createElement('tr');
-          ['Day', 'Time', 'Task', 'Done'].forEach(text => {
+          ['Day','Time','Task','Done'].forEach(text => {
             const th = document.createElement('th');
             th.textContent = text;
             if (text === 'Done') th.classList.add('center');
