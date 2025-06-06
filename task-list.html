@@ -6,62 +6,53 @@
   <title>Task List</title>
   <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.css" rel="stylesheet"/>
   <style>
-    :root {--primary: #333;--accent: #ffb900;--text: #4a4a4a;--bg: #f5f5f5;}
-    *, *::before, *::after {box-sizing: border-box;}
-    body {margin: 0;padding: 2rem;font-family: 'Segoe UI', Tahoma, sans-serif;background: #fff;color: var(--text);}
-    h2 {margin-top: 0;margin-bottom: 1rem;font-size: 1.5rem;color: var(--primary);border-bottom: 2px solid var(--accent);padding-bottom: 0.25rem;}
-    form#filterForm {display: flex;flex-wrap: wrap;gap: 0.75rem;align-items: center;margin-bottom: 1.5rem;}
-    form#filterForm select {padding: 0.5rem 0.75rem;border: 1px solid #ccc;border-radius: 4px;background: #fff;color: var(--text);font-size: 1rem;height: 2.25rem;cursor: pointer;}
-    form#filterForm select#staffSelect {width: 220px;}
-    form#filterForm select#taskDay {width: 150px;}
-    form#filterForm button#leaveScheduleBtn {margin-left: auto;padding: 0.5rem 0.75rem;border: 1px solid #ccc;border-radius: 4px;background: var(--accent);color: #fff;font-size: 1rem;height: 2.25rem;cursor: pointer;}
-    form#filterForm button#leaveScheduleBtn:hover {background: #e0a800;}
-    form#filterForm button#backBtn {margin-left: auto;padding: 0.5rem 0.75rem;border: 1px solid #ccc;border-radius: 4px;background: #ccc;color: var(--text);font-size: 1rem;height: 2.25rem;cursor: pointer;}
-    form#filterForm button#backBtn:hover {background: #aaa;}
-    .hidden {display: none;}
-    #overallProgressContainer {margin-bottom: 1.5rem;}
-    #overallProgressContainer > .label-bar {display: flex;align-items: center;justify-content: space-between;font-weight: 600;color: var(--primary);margin-bottom: 0.25rem;}
-    #overallProgressContainer .progress-track {width: 100%;height: 8px;background: #e0e0e0;border-radius: 4px;overflow: hidden;}
-    #overallProgressBar {width: 0%;height: 100%;background: var(--accent);transition: width 0.3s ease;}
-    #overallProgressContainer {visibility: hidden;}
-    table#taskTable {width: 100%;border-collapse: collapse;margin-top: 0.5rem;font-size: 0.95rem;}
-    table#taskTable thead {background: #fafafa;}
-    table#taskTable th, table#taskTable td {border: 1px solid #ddd;padding: 0.5rem 0.75rem;text-align: left;}
-    table#taskTable th {font-weight: 600;color: var(--primary);}
-    table#taskTable tr:nth-child(even) {background: #fcfcfc;}
-    table#taskTable td.center, table#taskTable th.center {text-align: center;}
-    #calendar {max-width: 900px;margin: 2rem auto;}
+    :root {--primary:#333;--accent:#ffb900;--text:#4a4a4a;}
+    *,*::before,*::after{box-sizing:border-box;}
+    body{margin:0;padding:2rem;font-family:'Segoe UI',Tahoma,sans-serif;background:#fff;color:var(--text);}
+    h2{margin:0 0 1rem;font-size:1.5rem;color:var(--primary);border-bottom:2px solid var(--accent);padding-bottom:.25rem;}
+    form#filterForm{display:flex;flex-wrap:wrap;gap:.75rem;align-items:center;margin-bottom:1.5rem;}
+    form#filterForm select, form#filterForm button{padding:.5rem .75rem;border:1px solid #ccc;border-radius:4px;font-size:1rem;height:2.25rem;}
+    form#filterForm select{background:#fff;color:var(--text);cursor:pointer;}
+    form#filterForm button{background:var(--accent);color:#fff;cursor:pointer;}
+    form#filterForm button:hover{background:#e0a800;}
+    form#filterForm button#backBtn{background:#ccc;color:var(--text);}
+    form#filterForm button#backBtn:hover{background:#aaa;}
+    .hidden{display:none;}
+    #overallProgressContainer{margin-bottom:1.5rem;visibility:hidden;}
+    #overallProgressContainer .label-bar{display:flex;justify-content:space-between;font-weight:600;color:var(--primary);margin-bottom:.25rem;}
+    #overallProgressContainer .progress-track{width:100%;height:8px;background:#e0e0e0;border-radius:4px;}
+    #overallProgressBar{width:0;height:100%;background:var(--accent);transition:width .3s;}
+    table#taskTable{width:100%;border-collapse:collapse;margin-top:.5rem;font-size:.95rem;}
+    table#taskTable th,table#taskTable td{border:1px solid #ddd;padding:.5rem .75rem;text-align:left;}
+    table#taskTable thead{background:#fafafa;}
+    table#taskTable tr:nth-child(even){background:#fcfcfc;}
+    table#taskTable th.center,table#taskTable td.center{text-align:center;}
+    #calendar{max-width:900px;margin:2rem auto;}
   </style>
 </head>
-
 <body>
+
   <h2>Task List</h2>
   <form id="filterForm">
-    <select id="staffSelect" required>
-      <option value="" disabled>Loading options…</option>
-    </select>
+    <select id="staffSelect" required></select>
     <select id="taskDay" class="hidden" required>
       <option value="" disabled selected>Select Day</option>
     </select>
+    </div>
     <button id="leaveScheduleBtn" type="button">Leave Schedule</button>
     <button id="backBtn" type="button" class="hidden">Back to Task List</button>
   </form>
 
   <div id="overallProgressContainer">
     <div class="label-bar">
-      <span>Progress:</span>
-      <span id="overallProgressText">0%</span>
+      <span>Progress:</span><span id="overallProgressText">0%</span>
     </div>
     <div class="progress-track">
       <div id="overallProgressBar"></div>
     </div>
   </div>
 
-  <table id="taskTable">
-    <thead></thead>
-    <tbody></tbody>
-  </table>
-
+  <table id="taskTable"><thead></thead><tbody></tbody></table>
   <div id="calendar" class="hidden"></div>
 
   <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.js"></script>
@@ -69,160 +60,87 @@
     const SHEET_ID = '1uqcBvF391zu34vQY-orpiWpGqqcjqevtB3yFByd0VDI';
     const staffNames = ['Mary','Shari','Hanna','Jeh','Daryl','Hyacinth','Marcus','Jovilyn','Daricalyn','Chez','Christine','Kath'];
     const staffOptions = ['Summary of Schedule', ...staffNames];
+    const STORAGE_DONE = 'kp360_done_states';
+    const STORAGE_RESET = 'kp360_last_reset';
 
-    const STORAGE_KEY_DONE = 'kp360_done_states';
-    const STORAGE_KEY_LAST_RESET = 'kp360_last_reset';
-
-    let doneStates = {};
-    let currentRawRows = [];
-    let currentHeaders = [];
-    let timeKey = null;
-    let dayColumnKeys = [];
+    let doneStates = {}, currentRawRows = [], currentHeaders = [], timeKey = '', dayColumnKeys = [];
 
     function resetIfPastSundayMidnightEST() {
       const now = new Date();
-      const fmtParts = new Intl.DateTimeFormat('en-US', {timeZone: 'America/New_York',hour12: false,year: 'numeric',month: '2-digit',day: '2-digit',hour: '2-digit',minute: '2-digit',second: '2-digit',weekday: 'long'}).formatToParts(now);
-
-      let y, M, d, H, m, s, wdayName;
-      fmtParts.forEach(p => {
-        if (p.type === 'year')        y = p.value;
-        else if (p.type === 'month')   M = p.value;
-        else if (p.type === 'day')     d = p.value;
-        else if (p.type === 'hour')    H = p.value;
-        else if (p.type === 'minute')  m = p.value;
-        else if (p.type === 'second')  s = p.value;
-        else if (p.type === 'weekday') wdayName = p.value;
+      const parts = new Intl.DateTimeFormat('en-US', {
+        timeZone:'America/New_York',hour12:false,
+        year:'numeric',month:'2-digit',day:'2-digit',
+        hour:'2-digit',minute:'2-digit',second:'2-digit',weekday:'long'
+      }).formatToParts(now);
+      let y,M,d,H,m,s,wd;
+      parts.forEach(p=>{
+        if(p.type==='year') y=p.value;
+        if(p.type==='month') M=p.value;
+        if(p.type==='day') d=p.value;
+        if(p.type==='hour') H=p.value;
+        if(p.type==='minute') m=p.value;
+        if(p.type==='second') s=p.value;
+        if(p.type==='weekday') wd=p.value;
       });
-
-      const weekdayIndex = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday']
-                            .indexOf(wdayName);
-
-      const tzName = new Intl.DateTimeFormat('en-US', {
-        timeZone: 'America/New_York',
-        timeZoneName: 'short'
-      }).formatToParts(now).find(p => p.type === 'timeZoneName').value;
-
-      const offsetHours = (tzName === 'EDT') ? 4 : 5;
-      const estNowAsUTC = new Date(Date.UTC(
-        Number(y), Number(M) - 1, Number(d),
-        Number(H) + offsetHours, Number(m), Number(s)
-      ));
-
-      const localDay = Number(d);
-      const sundayESTDay = localDay - weekdayIndex;
-      const sundayESTYear  = Number(y);
-      const sundayESTMonth = Number(M) - 1;
-      const sundayESTDate  = sundayESTDay;
-
-      const sundayMidnightEST_asUTC = new Date(Date.UTC(
-        sundayESTYear, sundayESTMonth, sundayESTDate,
-        offsetHours, 0, 0
-      ));
-
-      const stored = localStorage.getItem(STORAGE_KEY_LAST_RESET);
-      if (!stored) {
-        localStorage.removeItem(STORAGE_KEY_DONE);
-        localStorage.setItem(STORAGE_KEY_LAST_RESET, sundayMidnightEST_asUTC.toISOString());
-        doneStates = {};
-        return;
-      }
-
-      const lastResetDate = new Date(stored);
-      if (sundayMidnightEST_asUTC.getTime() > lastResetDate.getTime()) {
-        localStorage.removeItem(STORAGE_KEY_DONE);
-        localStorage.setItem(STORAGE_KEY_LAST_RESET, sundayMidnightEST_asUTC.toISOString());
+      const idx=['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'].indexOf(wd);
+      const tzAb=new Intl.DateTimeFormat('en-US',{timeZone:'America/New_York',timeZoneName:'short'}).formatToParts(now).find(p=>p.type==='timeZoneName').value;
+      const offset = tzAb==='EDT'?4:5;
+      const sundayUTC = new Date(Date.UTC(+y, +M-1, +d-idx, offset,0,0));
+      const last = localStorage.getItem(STORAGE_RESET);
+      if(!last || sundayUTC > new Date(last)) {
+        localStorage.removeItem(STORAGE_DONE);
+        localStorage.setItem(STORAGE_RESET, sundayUTC.toISOString());
         doneStates = {};
       }
     }
 
     function loadDoneStates() {
-      try {
-        const raw = localStorage.getItem(STORAGE_KEY_DONE);
-        doneStates = raw ? JSON.parse(raw) : {};
-      } catch {
-        doneStates = {};
-      }
+      try { doneStates = JSON.parse(localStorage.getItem(STORAGE_DONE) || '{}'); }
+      catch { doneStates = {}; }
     }
 
     function saveDoneStates() {
-      try {
-        localStorage.setItem(STORAGE_KEY_DONE, JSON.stringify(doneStates));
-      } catch (e) {
-        console.error('Failed to save doneStates:', e);
+      localStorage.setItem(STORAGE_DONE, JSON.stringify(doneStates));
+    }
+
+    async function fetchSheetTab(tab) {
+      const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?sheet=${encodeURIComponent(tab)}&tq=${encodeURIComponent('SELECT *')}`;
+      const res = await fetch(url);
+      const txt = await res.text();
+      const js = txt.replace(/^[^\(]*\(/,'').replace(/\);?$/,'');
+      const data = eval('('+js+')');
+      const rows = data.table.rows;
+      if(!rows.length) return { raw: [], hdr: [] };
+      const arr = rows.map(r => r.c.map(c => c && c.v != null ? c.v : ''));
+      const hdr = arr[0].map(h => h.toString().trim());
+      const raw = arr.slice(1).map(r => {
+        const o = {};
+        hdr.forEach((h,i) => o[h] = r[i]);
+        return o;
+      });
+      return { raw, hdr };
+    }
+
+    function to12Hour(raw) {
+      if(!raw) return '';
+      let sep = raw.includes('–') ? '–' : raw.includes('-') ? '-' : null;
+      if(sep) {
+        const [a,b] = raw.split(sep).map(s=>s.trim());
+        return fmt(a)+'–'+fmt(b);
       }
+      return fmt(raw);
     }
 
-    function buildSheetURLForTab(tabName) {
-      const base = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq`;
-      const query = encodeURIComponent('SELECT *');
-      return `${base}?sheet=${encodeURIComponent(tabName)}&tq=${query}`;
+    function fmt(hm) {
+      const [h,m] = hm.split(':').map(x => +x);
+      if(isNaN(h)||isNaN(m)) return hm;
+      const suffix = h>=12?'PM':'AM';
+      const hh = h%12||12;
+      return hh+':'+String(m).padStart(2,'0')+' '+suffix;
     }
 
-    async function fetchSheetTab(tabName) {
-      try {
-        const url = buildSheetURLForTab(tabName);
-        const resp = await fetch(url);
-        if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
-        const text = await resp.text();
-
-        const jsonStr = text
-          .replace(/^[^\(]*\(/, '')
-          .replace(/\);?$/, '');
-        const data = JSON.parse(jsonStr);
-        const allRows = data.table.rows;
-
-        if (!allRows.length) {
-          console.warn(`Tab "${tabName}" has no data rows.`);
-          return { rawRows: [], headers: [] };
-        }
-
-        const tableAsArrays = allRows.map(r =>
-          r.c.map(cell => (cell && cell.v != null) ? cell.v.toString() : '')
-        );
-
-        const headerRow = tableAsArrays[0].map(h => h.trim());
-        const rawRows = [];
-
-        for (let i = 1; i < tableAsArrays.length; i++) {
-          const cells = tableAsArrays[i];
-          const obj = {};
-          headerRow.forEach((hdr, colIdx) => {
-            obj[hdr] = (cells[colIdx] || '').trim();
-          });
-          rawRows.push(obj);
-        }
-
-        return { rawRows, headers: headerRow };
-      } catch (err) {
-        console.error(`Error fetching/parsing tab "${tabName}":`, err);
-        return { rawRows: [], headers: [] };
-      }
-    }
-
-    function to12Hour(rawTime) {
-      if (!rawTime) return '';
-      let sep = null;
-      if (rawTime.includes('–')) sep = '–';
-      else if (rawTime.includes('-')) sep = '-';
-      if (sep) {
-        const [from, to] = rawTime.split(sep).map(s => s.trim());
-        return formatSingle(from) + '–' + formatSingle(to);
-      }
-      return formatSingle(rawTime.trim());
-    }
-    function formatSingle(hhmm) {
-      const [hStr, mStr] = hhmm.split(':');
-      if (hStr == null || mStr == null) return hhmm;
-      let hh = parseInt(hStr, 10);
-      const mm = parseInt(mStr, 10);
-      const suffix = hh >= 12 ? 'PM' : 'AM';
-      hh = hh % 12;
-      if (hh === 0) hh = 12;
-      return hh + ':' + String(mm).padStart(2, '0') + ' ' + suffix;
-    }
-
-    function computeTaskKey(tabName, day, time, taskDesc) {
-      return `${tabName.trim()}||${day.trim()}||${time.trim()}||${taskDesc.trim()}`.toLowerCase();
+    function computeKey(tab, day, time, task) {
+      return `${tab}||${day}||${time}||${task}`.toLowerCase();
     }
 
     function clearTable() {
@@ -230,327 +148,191 @@
       document.querySelector('#taskTable tbody').innerHTML = '';
     }
 
-    function renderSummaryTable() {
-      const thead = document.querySelector('#taskTable thead');
-      const tbody = document.querySelector('#taskTable tbody');
-      thead.innerHTML = '';
-      tbody.innerHTML = '';
-
-      if (!currentHeaders.length) return;
-
-      const headerRow = document.createElement('tr');
-      currentHeaders.forEach(hdr => {
-        const th = document.createElement('th');
-        th.textContent = hdr;
-        headerRow.appendChild(th);
+    function renderSummary() {
+      const th = document.querySelector('#taskTable thead'),
+            tb = document.querySelector('#taskTable tbody');
+      th.innerHTML=''; tb.innerHTML='';
+      if(!currentHeaders.length) return;
+      const tr = document.createElement('tr');
+      currentHeaders.forEach(h => {
+        const thd = document.createElement('th');
+        thd.textContent = h;
+        tr.appendChild(thd);
       });
-      thead.appendChild(headerRow);
-
-      currentRawRows.forEach(rowObj => {
-        const tr = document.createElement('tr');
-        currentHeaders.forEach(hdr => {
+      th.appendChild(tr);
+      currentRawRows.forEach(r => {
+        const trb = document.createElement('tr');
+        currentHeaders.forEach(h => {
           const td = document.createElement('td');
-          td.textContent = rowObj[hdr] || '';
-          tr.appendChild(td);
+          td.textContent = r[h] || '';
+          trb.appendChild(td);
         });
-        tbody.appendChild(tr);
+        tb.appendChild(trb);
       });
     }
 
     function renderTasksForStaffAndDay() {
-      const staffTab  = document.getElementById('staffSelect').value;
-      const chosenDay = document.getElementById('taskDay').value;
-      const tbody     = document.querySelector('#taskTable tbody');
-      tbody.innerHTML = '';
+      const staff = document.getElementById('staffSelect').value;
+      const day   = document.getElementById('taskDay').value;
+      const tb    = document.querySelector('#taskTable tbody');
+      tb.innerHTML = '';
+      if(!staff||!day){ updateProgress(); return; }
 
-      if (!staffTab || !chosenDay) {
-        updateOverallProgress();
-        return;
-      }
+      let i=0;
+      while(i<currentRawRows.length){
+        const row = currentRawRows[i];
+        const rawTask = (row[day]||'').toString().trim();
+        if(!rawTask){ i++; continue; }
 
-      let i = 0;
-      while (i < currentRawRows.length) {
-        const rowObj  = currentRawRows[i];
-        const rawTime = (rowObj[timeKey]   || '').toString().trim();
-        const rawTask = (rowObj[chosenDay] || '').toString().trim();
-
-        if (!rawTask) {
-          i++;
-          continue;
+        let end = i;
+        while(end+1<currentRawRows.length && (currentRawRows[end+1][day]||'').toString().trim()===rawTask) {
+          end++;
         }
 
-        if (rawTask.toUpperCase() === 'OFF') {
-          const taskKey = computeTaskKey(staffTab, chosenDay, rawTime, rawTask);
-          const isDone  = !!doneStates[taskKey];
+        const startTime = currentRawRows[i][timeKey] || '';
+        const endTime   = currentRawRows[end][timeKey] || '';
+        const displayTime = to12Hour(startTime+'-'+endTime);
 
-          const tr = document.createElement('tr');
-
-          const tdDay = document.createElement('td');
-          tdDay.textContent = chosenDay;
-          tdDay.style.padding = '0.5rem 0.75rem';
-          tdDay.style.border = '1px solid #ddd';
-          tr.appendChild(tdDay);
-
-          const tdTime = document.createElement('td');
-          tdTime.textContent = '';
-          tdTime.style.padding = '0.5rem 0.75rem';
-          tdTime.style.border = '1px solid #ddd';
-          tr.appendChild(tdTime);
-
-          const tdTask = document.createElement('td');
-          tdTask.textContent = rawTask;
-          tdTask.style.padding = '0.5rem 0.75rem';
-          tdTask.style.border = '1px solid #ddd';
-          if (isDone) tdTask.style.textDecoration = 'line-through';
-          tr.appendChild(tdTask);
-
-          const tdDone = document.createElement('td');
-          tdDone.style.textAlign = 'center';
-          tdDone.style.padding = '0.5rem 0.75rem';
-          tdDone.style.border = '1px solid #ddd';
-          const chk = document.createElement('input');
-          chk.type = 'checkbox';
-          chk.checked = isDone;
-          chk.addEventListener('change', () => {
-            tdTask.style.textDecoration = chk.checked ? 'line-through' : 'none';
-            doneStates[taskKey] = chk.checked;
-            saveDoneStates();
-            updateOverallProgress();
-          });
-          tdDone.appendChild(chk);
-          tr.appendChild(tdDone);
-
-          tbody.appendChild(tr);
-          i++;
-          continue;
-        }
-
-        let endIndex = i;
-        while (endIndex + 1 < currentRawRows.length) {
-          const nextRow  = currentRawRows[endIndex + 1];
-          const nextTask = (nextRow[chosenDay] || '').toString().trim();
-          if (nextTask === rawTask) {
-            endIndex++;
-          } else {
-            break;
-          }
-        }
-
-        const firstRawTime = currentRawRows[i][timeKey].trim();
-        const lastRawTime  = currentRawRows[endIndex][timeKey].trim();
-
-        let combinedRaw = '';
-        const splitDash = (str) => {
-          if (str.includes('–')) return str.split('–').map(s => s.trim());
-          if (str.includes('-')) return str.split('-').map(s => s.trim());
-          return [str, str];
-        };
-        const [firstStart] = splitDash(firstRawTime);
-        const [, lastEnd]  = splitDash(lastRawTime);
-        combinedRaw = `${firstStart}-${lastEnd}`;
-
-        const displayTime = to12Hour(combinedRaw);
-        const taskText    = rawTask;
-        const taskKey     = computeTaskKey(staffTab, chosenDay, firstRawTime, taskText);
-        const isDone      = !!doneStates[taskKey];
+        const key = computeKey(staff,day,startTime,rawTask);
+        const done = !!doneStates[key];
 
         const tr = document.createElement('tr');
-
-        const tdDay = document.createElement('td');
-        tdDay.textContent = chosenDay;
-        tdDay.style.padding = '0.5rem 0.75rem';
-        tdDay.style.border = '1px solid #ddd';
-        tr.appendChild(tdDay);
-
-        const tdTime = document.createElement('td');
-        tdTime.textContent = displayTime;
-        tdTime.style.padding = '0.5rem 0.75rem';
-        tdTime.style.border = '1px solid #ddd';
-        tr.appendChild(tdTime);
-
-        const tdTask = document.createElement('td');
-        tdTask.textContent = taskText;
-        tdTask.style.padding = '0.5rem 0.75rem';
-        tdTask.style.border = '1px solid #ddd';
-        if (isDone) tdTask.style.textDecoration = 'line-through';
-        tr.appendChild(tdTask);
-
-        const tdDone = document.createElement('td');
-        tdDone.style.textAlign = 'center';
-        tdDone.style.padding = '0.5rem 0.75rem';
-        tdDone.style.border = '1px solid #ddd';
-        const chk2 = document.createElement('input');
-        chk2.type = 'checkbox';
-        chk2.checked = isDone;
-        chk2.addEventListener('change', () => {
-          tdTask.style.textDecoration = chk2.checked ? 'line-through' : 'none';
-          doneStates[taskKey] = chk2.checked;
-          saveDoneStates();
-          updateOverallProgress();
+        ['day','time','task'].forEach((fld,idx) => {
+          const td = document.createElement('td');
+          td.textContent = fld==='day'?day: fld==='time'?displayTime: rawTask;
+          td.style.padding='0.5rem .75rem';
+          td.style.border='1px solid #ddd';
+          if(fld==='task'&&done) td.style.textDecoration='line-through';
+          tr.appendChild(td);
         });
-        tdDone.appendChild(chk2);
+        const tdDone = document.createElement('td');
+        tdDone.classList.add('center');
+        const cb = document.createElement('input');
+        cb.type='checkbox'; cb.checked=done;
+        cb.onchange = ()=>{
+          doneStates[key] = cb.checked;
+          saveDoneStates();
+          updateProgress();
+          tr.querySelector('td:nth-child(3)').style.textDecoration = cb.checked?'line-through':'none';
+        };
+        tdDone.appendChild(cb);
         tr.appendChild(tdDone);
-        tbody.appendChild(tr);
-        i = endIndex + 1;
-      }
 
-      updateOverallProgress();
-      const progressContainer = document.getElementById('overallProgressContainer');
-      progressContainer.style.visibility = 'visible';
+        tb.appendChild(tr);
+        i = end + 1;
+      }
+      updateProgress();
+      document.getElementById('overallProgressContainer').style.visibility='visible';
     }
 
-    function updateOverallProgress() {
-      const tbody = document.querySelector('#taskTable tbody');
-      const rows = Array.from(tbody.querySelectorAll('tr'));
+    function updateProgress(){
+      const rows = Array.from(document.querySelectorAll('#taskTable tbody tr'));
       const total = rows.length;
-      if (total === 0) {
-        document.getElementById('overallProgressText').textContent = '0%';
-        document.getElementById('overallProgressBar').style.width = '0%';
-        return;
-      }
-      let doneCount = 0;
-      rows.forEach(tr => {
-        const chk = tr.querySelector('input[type="checkbox"]');
-        if (chk && chk.checked) doneCount++;
-      });
-      const pct = Math.round((doneCount / total) * 100);
+      const done  = rows.filter(r=>r.querySelector('input').checked).length;
+      const pct = total?Math.round(done/total*100):0;
       document.getElementById('overallProgressText').textContent = pct + '%';
       document.getElementById('overallProgressBar').style.width = pct + '%';
     }
 
-    document.addEventListener('DOMContentLoaded', async () => {
+    document.addEventListener('DOMContentLoaded', async ()=>{
       resetIfPastSundayMidnightEST();
       loadDoneStates();
 
-      const staffSelect = document.getElementById('staffSelect');
-      const daySelect   = document.getElementById('taskDay');
-      const leaveButton = document.getElementById('leaveScheduleBtn');
-      const backButton  = document.getElementById('backBtn');
-      const progressContainer = document.getElementById('overallProgressContainer');
-      const taskTable = document.getElementById('taskTable');
-      const calendarContainer = document.getElementById('calendar');
+      const staffSelect    = document.getElementById('staffSelect');
+      const daySelect      = document.getElementById('taskDay');
+      const leaveBtn       = document.getElementById('leaveScheduleBtn');
+      const backBtn        = document.getElementById('backBtn');
+      const progressCont   = document.getElementById('overallProgressContainer');
+      const calendarCont   = document.getElementById('calendar');
 
-      staffSelect.innerHTML = '';
-      staffSelect.appendChild(new Option('Select Staff', '', true, false));
-      staffOptions.forEach(optName => {
-        const opt = new Option(optName, optName, false, false);
-        staffSelect.appendChild(opt);
-      });
+      staffSelect.innerHTML='';
+      staffSelect.appendChild(new Option('Select Staff','',true,false));
+      staffOptions.forEach(name => staffSelect.appendChild(new Option(name,name)));
 
-      staffSelect.addEventListener('change', async () => {
-        const chosen = staffSelect.value;
-
-        if (chosen === 'Summary of Schedule') {
-          document.querySelector('h2').textContent = 'Task List';
+      staffSelect.addEventListener('change', async ()=>{
+        const v = staffSelect.value;
+        if(v==='Summary of Schedule'){
+          document.querySelector('h2').textContent='Task List';
           daySelect.classList.add('hidden');
-          progressContainer.classList.add('hidden');
-          taskTable.classList.remove('hidden');
-          calendarContainer.classList.add('hidden');
+          progressCont.classList.add('hidden');
+          document.getElementById('taskTable').classList.remove('hidden');
+          calendarCont.classList.add('hidden');
           clearTable();
-
-          const { rawRows, headers } = await fetchSheetTab('Summary of Schedule');
-          currentRawRows = rawRows;
-          currentHeaders = headers;
-          renderSummaryTable();
-          return;
+          const { raw, hdr } = await fetchSheetTab('Summary of Schedule');
+          currentRawRows = raw;
+          currentHeaders = hdr;
+          renderSummary();
+        } else {
+          document.querySelector('h2').textContent='Task List';
+          daySelect.classList.remove('hidden');
+          progressCont.classList.remove('hidden');
+          document.getElementById('taskTable').classList.remove('hidden');
+          calendarCont.classList.add('hidden');
+          clearTable();
+          const { raw, hdr } = await fetchSheetTab(v);
+          currentRawRows = raw;
+          currentHeaders = hdr;
+          timeKey = hdr.find(h=>h.toLowerCase()==='time');
+          dayColumnKeys = hdr.filter(h=>h.toLowerCase()!=='time').map(h=>h.toUpperCase());
+          daySelect.innerHTML='';
+          daySelect.appendChild(new Option('Select Day','',true,false));
+          dayColumnKeys.forEach(d=>daySelect.appendChild(new Option(d,d)));
+          updateProgress();
         }
-
-        document.querySelector('h2').textContent = 'Task List';
-        daySelect.classList.remove('hidden');
-        progressContainer.classList.remove('hidden');
-        taskTable.classList.remove('hidden');
-        calendarContainer.classList.add('hidden');
-        clearTable();
-
-        if (!chosen) return;
-
-        const { rawRows: staffRows, headers: staffHeaders } = await fetchSheetTab(chosen);
-        currentRawRows = staffRows;
-        currentHeaders = staffHeaders;
-
-        const timeIdx = staffHeaders.findIndex(h => h.toLowerCase() === 'time');
-        timeKey = staffHeaders[timeIdx];
-        dayColumnKeys = staffHeaders
-          .filter((h, idx) => h !== '' && idx !== timeIdx)
-          .map(h => h.toUpperCase());
-
-        daySelect.innerHTML = '';
-        daySelect.appendChild(new Option('Select Day', '', true, false));
-        dayColumnKeys.forEach(d => {
-          const opt = new Option(d, d, false, false);
-          daySelect.appendChild(opt);
-        });
-
-        updateOverallProgress();
       });
 
-      daySelect.addEventListener('change', () => {
+      daySelect.addEventListener('change', ()=>{
         clearTable();
-        const chosenStaff = staffSelect.value;
-        if (chosenStaff && daySelect.value) {
-          const thead = document.querySelector('#taskTable thead');
-          thead.innerHTML = '';
-          const headerRow = document.createElement('tr');
-          ['Day','Time','Task','Done'].forEach(text => {
-            const th = document.createElement('th');
-            th.textContent = text;
-            if (text === 'Done') th.classList.add('center');
-            headerRow.appendChild(th);
+        if(staffSelect.value && daySelect.value){
+          const th = document.querySelector('#taskTable thead');
+          th.innerHTML='';
+          const tr = document.createElement('tr');
+          ['Day','Time','Task','Done'].forEach(txt=>{
+            const thd = document.createElement('th');
+            thd.textContent = txt;
+            if(txt==='Done') thd.classList.add('center');
+            tr.appendChild(thd);
           });
-          thead.appendChild(headerRow);
-
+          th.appendChild(tr);
           renderTasksForStaffAndDay();
         }
       });
 
-      leaveButton.addEventListener('click', async () => {
+      leaveBtn.addEventListener('click', async ()=>{
         staffSelect.classList.add('hidden');
         daySelect.classList.add('hidden');
-        leaveButton.classList.add('hidden');
-        backButton.classList.remove('hidden');
-
+        leaveBtn.classList.add('hidden');
+        backBtn.classList.remove('hidden');
         document.querySelector('h2').textContent = 'Leave Schedule';
-        progressContainer.classList.add('hidden');
-        taskTable.classList.add('hidden');
+        progressCont.classList.add('hidden');
+        document.getElementById('taskTable').classList.add('hidden');
 
-        const { rawRows, headers } = await fetchSheetTab('Leave Schedule');
+        const { raw, hdr } = await fetchSheetTab('Leave Schedule');
+        const dateKey = hdr.find(h=>h.toLowerCase()==='date');
+        const nameKey = hdr.find(h=>h.toLowerCase()==='name');
 
-        const dateKey = headers.find(hdr => hdr.trim().toLowerCase() === 'date');
-        const nameKey = headers.find(hdr => hdr.trim().toLowerCase() === 'name');
-        if (!dateKey || !nameKey) {
-          console.warn(`Missing "Date" or "Name" column. headers =`, headers);
-        }
-
-        const events = rawRows
-          .filter(row => row[dateKey] && row[nameKey])
-          .map(row => ({
-            title: row[nameKey],
-            start: row[dateKey],
-            allDay: true
-          }));
-
-        calendarContainer.classList.remove('hidden');
-        calendarContainer.innerHTML = '';
-        const calendar = new FullCalendar.Calendar(calendarContainer, {
-          initialView: 'dayGridMonth',
-          headerToolbar: {
-            left: 'prev,next today',
-            center: 'title',
-            right: 'dayGridMonth,listWeek'
-          },
-          events: events,
-          navLinks: true,
-          dayMaxEvents: true
+        const events = raw.filter(r=>r[dateKey]&&r[nameKey]).map(r=>{
+          const dt = (r[dateKey] instanceof Date) ? r[dateKey] : new Date(r[dateKey]);
+          return { title: r[nameKey], start: dt.toISOString().slice(0,10), allDay: true };
         });
-        calendar.render();
+
+        calendarCont.classList.remove('hidden');
+        calendarCont.innerHTML = '';
+        new FullCalendar.Calendar(calendarCont, {
+          initialView: 'dayGridMonth',
+          headerToolbar: { left:'prev,next today', center:'title', right:'dayGridMonth,listWeek' },
+          events,
+          displayEventTime: false,
+          dayMaxEventRows: true,
+          navLinks: true
+        }).render();
       });
 
-      backButton.addEventListener('click', () => {
-        calendarContainer.classList.add('hidden');
+      backBtn.addEventListener('click', ()=>{
+        calendarCont.classList.add('hidden');
         staffSelect.classList.remove('hidden');
-        leaveButton.classList.remove('hidden');
-        backButton.classList.add('hidden');
-
+        leaveBtn.classList.remove('hidden');
+        backBtn.classList.add('hidden');
         document.querySelector('h2').textContent = 'Task List';
         staffSelect.value = 'Summary of Schedule';
         staffSelect.dispatchEvent(new Event('change'));
