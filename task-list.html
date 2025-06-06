@@ -351,16 +351,10 @@ leaveBtn.addEventListener('click', async ()=>{
 
   calendarCont.classList.remove('hidden');
   calendarCont.innerHTML = '';
-  new FullCalendar.Calendar(calendarCont, {
-    initialView: 'dayGridMonth',
-    headerToolbar: { left:'prev,next today', center:'title', right:'dayGridMonth,listWeek' },
-    events,
-    displayEventTime: false,
-    dayMaxEventRows: true,
-    navLinks: true
+  new FullCalendar.Calendar(calendarCont, {initialView: 'dayGridMonth',headerToolbar: {left:  'prev,next today',center:'title',right: 'dayGridMonth,listWeek'},
+  fixedWeekCount: false, showNonCurrentDates: false, events, displayEventTime: false, dayMaxEventRows: true, navLinks: true
   }).render();
 });
-
 
       backBtn.addEventListener('click', ()=>{
         calendarCont.classList.add('hidden');
