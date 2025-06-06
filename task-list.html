@@ -3,7 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1.0" />
-  <title>Task List (Auto-Reset Each Week)</title>
+  <title>Task List</title>
+  <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.css" rel="stylesheet"/>
   <style>
     :root {--primary: #333;--accent: #ffb900;--text: #4a4a4a;--bg: #f5f5f5;}
     *, *::before, *::after {box-sizing: border-box;}
@@ -13,18 +14,23 @@
     form#filterForm select {padding: 0.5rem 0.75rem;border: 1px solid #ccc;border-radius: 4px;background: #fff;color: var(--text);font-size: 1rem;height: 2.25rem;cursor: pointer;}
     form#filterForm select#staffSelect {width: 220px;}
     form#filterForm select#taskDay {width: 150px;}
-    .hidden { display: none; }
+    form#filterForm button#leaveScheduleBtn {margin-left: auto;padding: 0.5rem 0.75rem;border: 1px solid #ccc;border-radius: 4px;background: var(--accent);color: #fff;font-size: 1rem;height: 2.25rem;cursor: pointer;}
+    form#filterForm button#leaveScheduleBtn:hover {background: #e0a800;}
+    form#filterForm button#backBtn {margin-left: auto;padding: 0.5rem 0.75rem;border: 1px solid #ccc;border-radius: 4px;background: #ccc;color: var(--text);font-size: 1rem;height: 2.25rem;cursor: pointer;}
+    form#filterForm button#backBtn:hover {background: #aaa;}
+    .hidden {display: none;}
     #overallProgressContainer {margin-bottom: 1.5rem;}
     #overallProgressContainer > .label-bar {display: flex;align-items: center;justify-content: space-between;font-weight: 600;color: var(--primary);margin-bottom: 0.25rem;}
     #overallProgressContainer .progress-track {width: 100%;height: 8px;background: #e0e0e0;border-radius: 4px;overflow: hidden;}
     #overallProgressBar {width: 0%;height: 100%;background: var(--accent);transition: width 0.3s ease;}
+    #overallProgressContainer {visibility: hidden;}
     table#taskTable {width: 100%;border-collapse: collapse;margin-top: 0.5rem;font-size: 0.95rem;}
     table#taskTable thead {background: #fafafa;}
     table#taskTable th, table#taskTable td {border: 1px solid #ddd;padding: 0.5rem 0.75rem;text-align: left;}
     table#taskTable th {font-weight: 600;color: var(--primary);}
     table#taskTable tr:nth-child(even) {background: #fcfcfc;}
-    table#taskTable td.center,
-    table#taskTable th.center {text-align: center;}
+    table#taskTable td.center, table#taskTable th.center {text-align: center;}
+    #calendar {max-width: 900px;margin: 2rem auto;}
   </style>
 </head>
 
@@ -34,10 +40,11 @@
     <select id="staffSelect" required>
       <option value="" disabled>Loading options…</option>
     </select>
-
-    <select id="taskDay" required>
+    <select id="taskDay" class="hidden" required>
       <option value="" disabled selected>Select Day</option>
     </select>
+    <button id="leaveScheduleBtn" type="button">Leave Schedule</button>
+    <button id="backBtn" type="button" class="hidden">Back to Task List</button>
   </form>
 
   <div id="overallProgressContainer">
@@ -51,29 +58,16 @@
   </div>
 
   <table id="taskTable">
-    <thead>
-    </thead>
-    <tbody>
-    </tbody>
+    <thead></thead>
+    <tbody></tbody>
   </table>
 
+  <div id="calendar" class="hidden"></div>
+
+  <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.js"></script>
   <script>
     const SHEET_ID = '1uqcBvF391zu34vQY-orpiWpGqqcjqevtB3yFByd0VDI';
-    const staffNames = [
-      'Mary',
-      'Shari',
-      'Hanna',
-      'Jeh',
-      'Daryl',
-      'Hyacinth',
-      'Marcus',
-      'Jovilyn',
-      'Daricalyn',
-      'Chez',
-      'Christine',
-      'Kath'
-    ];
-
+    const staffNames = ['Mary','Shari','Hanna','Jeh','Daryl','Hyacinth','Marcus','Jovilyn','Daricalyn','Chez','Christine','Kath'];
     const staffOptions = ['Summary of Schedule', ...staffNames];
 
     const STORAGE_KEY_DONE = 'kp360_done_states';
@@ -87,17 +81,7 @@
 
     function resetIfPastSundayMidnightEST() {
       const now = new Date();
-      const fmtParts = new Intl.DateTimeFormat('en-US', {
-        timeZone: 'America/New_York',
-        hour12: false,
-        year: 'numeric',
-        month: '2-digit',
-        day: '2-digit',
-        hour: '2-digit',
-        minute: '2-digit',
-        second: '2-digit',
-        weekday: 'long'
-      }).formatToParts(now);
+      const fmtParts = new Intl.DateTimeFormat('en-US', {timeZone: 'America/New_York',hour12: false,year: 'numeric',month: '2-digit',day: '2-digit',hour: '2-digit',minute: '2-digit',second: '2-digit',weekday: 'long'}).formatToParts(now);
 
       let y, M, d, H, m, s, wdayName;
       fmtParts.forEach(p => {
@@ -117,30 +101,22 @@
         timeZone: 'America/New_York',
         timeZoneName: 'short'
       }).formatToParts(now).find(p => p.type === 'timeZoneName').value;
-      
+
       const offsetHours = (tzName === 'EDT') ? 4 : 5;
       const estNowAsUTC = new Date(Date.UTC(
-        Number(y),
-        Number(M) - 1,
-        Number(d),
-        Number(H) + offsetHours,
-        Number(m),
-        Number(s)
+        Number(y), Number(M) - 1, Number(d),
+        Number(H) + offsetHours, Number(m), Number(s)
       ));
 
       const localDay = Number(d);
-      const sundayESTDay = localDay - weekdayIndex; 
+      const sundayESTDay = localDay - weekdayIndex;
       const sundayESTYear  = Number(y);
       const sundayESTMonth = Number(M) - 1;
       const sundayESTDate  = sundayESTDay;
 
       const sundayMidnightEST_asUTC = new Date(Date.UTC(
-        sundayESTYear,
-        sundayESTMonth,
-        sundayESTDate,
-        offsetHours,
-        0,
-        0
+        sundayESTYear, sundayESTMonth, sundayESTDate,
+        offsetHours, 0, 0
       ));
 
       const stored = localStorage.getItem(STORAGE_KEY_LAST_RESET);
@@ -180,6 +156,47 @@
       const base = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq`;
       const query = encodeURIComponent('SELECT *');
       return `${base}?sheet=${encodeURIComponent(tabName)}&tq=${query}`;
+    }
+
+    async function fetchSheetTab(tabName) {
+      try {
+        const url = buildSheetURLForTab(tabName);
+        const resp = await fetch(url);
+        if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+        const text = await resp.text();
+
+        const jsonStr = text
+          .replace(/^[^\(]*\(/, '')
+          .replace(/\);?$/, '');
+        const data = JSON.parse(jsonStr);
+        const allRows = data.table.rows;
+
+        if (!allRows.length) {
+          console.warn(`Tab "${tabName}" has no data rows.`);
+          return { rawRows: [], headers: [] };
+        }
+
+        const tableAsArrays = allRows.map(r =>
+          r.c.map(cell => (cell && cell.v != null) ? cell.v.toString() : '')
+        );
+
+        const headerRow = tableAsArrays[0].map(h => h.trim());
+        const rawRows = [];
+
+        for (let i = 1; i < tableAsArrays.length; i++) {
+          const cells = tableAsArrays[i];
+          const obj = {};
+          headerRow.forEach((hdr, colIdx) => {
+            obj[hdr] = (cells[colIdx] || '').trim();
+          });
+          rawRows.push(obj);
+        }
+
+        return { rawRows, headers: headerRow };
+      } catch (err) {
+        console.error(`Error fetching/parsing tab "${tabName}":`, err);
+        return { rawRows: [], headers: [] };
+      }
     }
 
     function to12Hour(rawTime) {
@@ -362,24 +379,24 @@
         tdDone.style.textAlign = 'center';
         tdDone.style.padding = '0.5rem 0.75rem';
         tdDone.style.border = '1px solid #ddd';
-        const chk = document.createElement('input');
-        chk.type = 'checkbox';
-        chk.checked = isDone;
-        chk.addEventListener('change', () => {
-          tdTask.style.textDecoration = chk.checked ? 'line-through' : 'none';
-          doneStates[taskKey] = chk.checked;
+        const chk2 = document.createElement('input');
+        chk2.type = 'checkbox';
+        chk2.checked = isDone;
+        chk2.addEventListener('change', () => {
+          tdTask.style.textDecoration = chk2.checked ? 'line-through' : 'none';
+          doneStates[taskKey] = chk2.checked;
           saveDoneStates();
           updateOverallProgress();
         });
-        tdDone.appendChild(chk);
+        tdDone.appendChild(chk2);
         tr.appendChild(tdDone);
-
         tbody.appendChild(tr);
-
         i = endIndex + 1;
       }
 
       updateOverallProgress();
+      const progressContainer = document.getElementById('overallProgressContainer');
+      progressContainer.style.visibility = 'visible';
     }
 
     function updateOverallProgress() {
@@ -401,70 +418,17 @@
       document.getElementById('overallProgressBar').style.width = pct + '%';
     }
 
-    async function fetchSheetTab(tabName) {
-      console.log(`Fetching data for tab: "${tabName}"`);
-      try {
-        const url = buildSheetURLForTab(tabName);
-        const resp = await fetch(url);
-        if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
-        const text = await resp.text();
-
-        const jsonStr = text
-          .replace(/^[^\(]*\(/, '')
-          .replace(/\);?$/, '');
-        const data = JSON.parse(jsonStr);
-        const allRows = data.table.rows;
-
-        if (!allRows.length) {
-          console.warn(`Tab "${tabName}" has no data rows.`);
-          return { rawRows: [], headers: [] };
-        }
-
-        const tableAsArrays = allRows.map(r =>
-          r.c.map(cell => (cell && cell.v != null) ? cell.v.toString() : '')
-        );
-
-        const headerRow = tableAsArrays[0].map(h => h.trim());
-        currentHeaders = headerRow;
-        console.log(`Headers for "${tabName}":`, headerRow);
-
-        const timeIdx = headerRow.findIndex(h => h.toLowerCase() === 'time');
-        if (timeIdx >= 0) {
-          timeKey = headerRow[timeIdx];
-          dayColumnKeys = headerRow
-            .filter((h, idx) => h !== '' && idx !== timeIdx)
-            .map(h => h.toUpperCase());
-        } else {
-          timeKey = null;
-          dayColumnKeys = [];
-        }
-
-        const rawRows = [];
-        for (let i = 1; i < tableAsArrays.length; i++) {
-          const cells = tableAsArrays[i];
-          const obj = {};
-          headerRow.forEach((hdr, colIdx) => {
-            obj[hdr] = (cells[colIdx] || '').trim();
-          });
-          rawRows.push(obj);
-        }
-        console.log(`Loaded ${rawRows.length} data rows for "${tabName}".`);
-        return { rawRows, headers: headerRow };
-
-      } catch (err) {
-        console.error(`Error fetching/parsing tab "${tabName}":`, err);
-        return { rawRows: [], headers: [] };
-      }
-    }
-
     document.addEventListener('DOMContentLoaded', async () => {
-
       resetIfPastSundayMidnightEST();
       loadDoneStates();
 
       const staffSelect = document.getElementById('staffSelect');
       const daySelect   = document.getElementById('taskDay');
+      const leaveButton = document.getElementById('leaveScheduleBtn');
+      const backButton  = document.getElementById('backBtn');
       const progressContainer = document.getElementById('overallProgressContainer');
+      const taskTable = document.getElementById('taskTable');
+      const calendarContainer = document.getElementById('calendar');
 
       staffSelect.innerHTML = '';
       staffSelect.appendChild(new Option('Select Staff', '', true, false));
@@ -475,11 +439,14 @@
 
       staffSelect.addEventListener('change', async () => {
         const chosen = staffSelect.value;
-        clearTable();
 
         if (chosen === 'Summary of Schedule') {
+          document.querySelector('h2').textContent = 'Task List';
           daySelect.classList.add('hidden');
           progressContainer.classList.add('hidden');
+          taskTable.classList.remove('hidden');
+          calendarContainer.classList.add('hidden');
+          clearTable();
 
           const { rawRows, headers } = await fetchSheetTab('Summary of Schedule');
           currentRawRows = rawRows;
@@ -488,16 +455,22 @@
           return;
         }
 
+        document.querySelector('h2').textContent = 'Task List';
         daySelect.classList.remove('hidden');
         progressContainer.classList.remove('hidden');
+        taskTable.classList.remove('hidden');
+        calendarContainer.classList.add('hidden');
+        clearTable();
 
-        const { rawRows, headers } = await fetchSheetTab(chosen);
-        currentRawRows = rawRows;
-        currentHeaders = headers;
+        if (!chosen) return;
 
-        const timeIdx = headers.findIndex(h => h.toLowerCase() === 'time');
-        timeKey = headers[timeIdx];
-        dayColumnKeys = headers
+        const { rawRows: staffRows, headers: staffHeaders } = await fetchSheetTab(chosen);
+        currentRawRows = staffRows;
+        currentHeaders = staffHeaders;
+
+        const timeIdx = staffHeaders.findIndex(h => h.toLowerCase() === 'time');
+        timeKey = staffHeaders[timeIdx];
+        dayColumnKeys = staffHeaders
           .filter((h, idx) => h !== '' && idx !== timeIdx)
           .map(h => h.toUpperCase());
 
@@ -528,6 +501,59 @@
 
           renderTasksForStaffAndDay();
         }
+      });
+
+      leaveButton.addEventListener('click', async () => {
+        staffSelect.classList.add('hidden');
+        daySelect.classList.add('hidden');
+        leaveButton.classList.add('hidden');
+        backButton.classList.remove('hidden');
+
+        document.querySelector('h2').textContent = 'Leave Schedule';
+        progressContainer.classList.add('hidden');
+        taskTable.classList.add('hidden');
+
+        const { rawRows, headers } = await fetchSheetTab('Leave Schedule');
+
+        const dateKey = headers.find(hdr => hdr.trim().toLowerCase() === 'date');
+        const nameKey = headers.find(hdr => hdr.trim().toLowerCase() === 'name');
+        if (!dateKey || !nameKey) {
+          console.warn(`Missing "Date" or "Name" column. headers =`, headers);
+        }
+
+        const events = rawRows
+          .filter(row => row[dateKey] && row[nameKey])
+          .map(row => ({
+            title: row[nameKey],
+            start: row[dateKey],
+            allDay: true
+          }));
+
+        calendarContainer.classList.remove('hidden');
+        calendarContainer.innerHTML = '';
+        const calendar = new FullCalendar.Calendar(calendarContainer, {
+          initialView: 'dayGridMonth',
+          headerToolbar: {
+            left: 'prev,next today',
+            center: 'title',
+            right: 'dayGridMonth,listWeek'
+          },
+          events: events,
+          navLinks: true,
+          dayMaxEvents: true
+        });
+        calendar.render();
+      });
+
+      backButton.addEventListener('click', () => {
+        calendarContainer.classList.add('hidden');
+        staffSelect.classList.remove('hidden');
+        leaveButton.classList.remove('hidden');
+        backButton.classList.add('hidden');
+
+        document.querySelector('h2').textContent = 'Task List';
+        staffSelect.value = 'Summary of Schedule';
+        staffSelect.dispatchEvent(new Event('change'));
       });
 
       staffSelect.value = 'Summary of Schedule';
