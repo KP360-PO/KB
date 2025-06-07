@@ -34,7 +34,8 @@
     th,td{border:1px solid #ddd;padding:.75rem;text-align:left}
     .cards-container.marketplace-performance {display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.2rem;}
     .cards-container.marketplace-performance .card {max-width: none; width: auto;}
-    .cards-container.marketplace-performance .screenshot {width: 100%; height: auto; object-fit: contain;}
+    .cards-container.marketplace-performance .screenshot {width: 100%; height: auto; object-fit: contain;transition: transform 0.3s ease;cursor: zoom-in;}
+    .cards-container.marketplace-performance .screenshot:hover {transform: scale(2);transform-origin: center;z-index: 10;}
     .cards-container.top-performers {display: flex;flex-wrap: nowrap;justify-content: center;gap: 2rem;margin-top: 2rem;overflow-x: auto;padding-bottom: 1rem;}
     .cards-container.top-performers .performer {flex: 0 0 auto;text-align: center;}
     .cards-container.top-performers .profile-pic {width: 100px;height: 100px;border-radius: 50%;object-fit: cover;display: block;margin: 0 auto;border: 3px solid var(--accent);}
@@ -50,7 +51,7 @@
     .actions a::after{content:'→';margin-left:.25rem}
     .actions a:hover{color:var(--accent)}
     #imgModal {position: fixed;z-index: 10000;top: 0;left: 0;width: 100%;height: 100%;background-color: rgba(0,0,0,0.8);display: flex;align-items: center;justify-content: center;}
-    #imgModalContent {max-width: 90%;max-height: 90%;border-radius: 8px;box-shadow: 0 2px 10px rgba(0,0,0,0.5);}
+    #imgModalContent {max-width: 600px;max-height: 80vh;width: auto;height: auto;}
     #imgModalClose {position: absolute;top: 1.5rem;right: 1.5rem;color: #fff;font-size: 2rem;font-weight: bold;cursor: pointer;user-select: none;}
   </style>
 </head>
@@ -532,8 +533,12 @@ function initImageZoom() {
   const zoomableImgs = document.querySelectorAll('.cards-container.marketplace-performance .screenshot');
   zoomableImgs.forEach(img => {
     img.style.cursor = 'zoom-in';
-    img.addEventListener('click', () => {
+    img.addEventListener('mouseenter', () => {
       openImageModal(img.src, img.alt);
+    });
+
+    img.addEventListener('mouseleave', () => {
+      closeImageModal();
     });
   });
 }
