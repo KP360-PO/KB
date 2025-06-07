@@ -59,10 +59,17 @@
   <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.js"></script>
   <script>
     const SHEET_ID = '1uqcBvF391zu34vQY-orpiWpGqqcjqevtB3yFByd0VDI';
-    const staffNames = ['Mary','Shari','Hanna','Jeh','Daryl','Hyacinth','Marcus','Jovilyn','Daricalyn','Chez','Christine','Kath'];
+    const staffNames = ['Mary','Shari','Hanna','Jeh','Daryl','Hyacinth','Marcus','Jovilyn','Daricalyn','Chez','Christine','Kath'/*, add more names here */];
     const staffOptions = ['Summary of Schedule', ...staffNames];
     const STORAGE_DONE = 'kp360_done_states';
     const STORAGE_RESET = 'kp360_last_reset';
+
+    // Dynamically assign each name a unique HSL color
+    const personColors = {};
+    staffNames.forEach((name, i) => {
+      const hue = Math.round(i * 360 / staffNames.length);
+      personColors[name] = `hsl(${hue}, 50%, 50%)`;
+    });
 
     let doneStates = {}, currentRawRows = [], currentHeaders = [], timeKey = '', dayColumnKeys = [];
 
@@ -192,7 +199,13 @@
 
         const startTime = currentRawRows[i][timeKey] || '';
         const endTime   = currentRawRows[end][timeKey] || '';
-        const displayTime = to12Hour(startTime+'-'+endTime);
+
+        let displayTime;
+        if (rawTask.toUpperCase() === 'OFF') {
+          displayTime = 'OFF';
+        } else {
+          displayTime = to12Hour(startTime + '-' + endTime);
+        }
 
         const key = computeKey(staff,day,startTime,rawTask);
         const done = !!doneStates[key];
@@ -299,62 +312,71 @@
         }
       });
 
-leaveBtn.addEventListener('click', async ()=>{
-  staffSelect.classList.add('hidden');
-  daySelect.classList.add('hidden');
-  leaveBtn.classList.add('hidden');
-  backBtn.classList.remove('hidden');
-  document.querySelector('h2').textContent = 'Leave Schedule';
-  progressCont.classList.add('hidden');
-  document.getElementById('taskTable').classList.add('hidden');
+      leaveBtn.addEventListener('click', async ()=>{
+        staffSelect.classList.add('hidden');
+        daySelect.classList.add('hidden');
+        leaveBtn.classList.add('hidden');
+        backBtn.classList.remove('hidden');
+        document.querySelector('h2').textContent = 'Leave Schedule';
+        progressCont.classList.add('hidden');
+        document.getElementById('taskTable').classList.add('hidden');
 
-  const { raw, hdr } = await fetchSheetTab('Leave Schedule');
-  const dateKey = hdr.find(h=>h.toLowerCase()==='date');
-  const nameKey = hdr.find(h=>h.toLowerCase()==='name');
+        const { raw, hdr } = await fetchSheetTab('Leave Schedule');
+        const dateKey = hdr.find(h=>h.toLowerCase()==='date');
+        const nameKey = hdr.find(h=>h.toLowerCase()==='name');
 
-  const rows = raw
-    .filter(r=>r[dateKey] && r[nameKey])
-    .map(r=>({ name: r[nameKey], date: new Date(r[dateKey]) }))
-    .sort((a,b)=>a.date - b.date);
+        const rows = raw
+          .filter(r=>r[dateKey] && r[nameKey])
+          .map(r=>({ name: r[nameKey], date: new Date(r[dateKey]) }))
+          .sort((a,b)=>a.date - b.date);
 
-  const events = [];
-  let current = null;
-  rows.forEach(({name, date})=>{
-    if (
-      current &&
-      current.name === name &&
-      date - current.lastDate === 24*60*60*1000
-    ) {
-      current.lastDate = date;
-    } else {
-      if (current) {
-        events.push({
-          title: current.name,
-          start: current.startDate.toISOString().slice(0,10),
-          end:   new Date(current.lastDate.getTime()+24*60*60*1000)
-                   .toISOString().slice(0,10),
-          allDay: true
+        const events = [];
+        let current = null;
+        rows.forEach(({name, date})=>{
+          if (
+            current &&
+            current.name === name &&
+            date - current.lastDate === 24*60*60*1000
+          ) {
+            current.lastDate = date;
+          } else {
+            if (current) {
+              events.push({
+                title: current.name,
+                start: current.startDate.toISOString().slice(0,10),
+                end:   new Date(current.lastDate.getTime()+24*60*60*1000)
+                         .toISOString().slice(0,10),
+                allDay: true,
+                color:  personColors[current.name] || '#999'
+              });
+            }
+            current = { name, startDate: date, lastDate: date };
+          }
         });
-      }
-      current = { name, startDate: date, lastDate: date };
-    }
-  });
-  if (current) {
-    events.push({
-      title: current.name,
-      start: current.startDate.toISOString().slice(0,10),
-      end:   new Date(current.lastDate.getTime()+24*60*60*1000)
-               .toISOString().slice(0,10),
-      allDay: true
-    });
-  }
+        if (current) {
+          events.push({
+            title: current.name,
+            start: current.startDate.toISOString().slice(0,10),
+            end:   new Date(current.lastDate.getTime()+24*60*60*1000)
+                     .toISOString().slice(0,10),
+            allDay: true,
+            color:  personColors[current.name] || '#999'
+          });
+        }
 
-  calendarCont.classList.remove('hidden');
-  calendarCont.innerHTML = '';
-  new FullCalendar.Calendar(calendarCont, {initialView: 'dayGridMonth',headerToolbar: {left:  'prev,next today',center:'title',right: 'dayGridMonth,listWeek'},
-  fixedWeekCount: false, showNonCurrentDates: false, events, displayEventTime: false, dayMaxEventRows: true, navLinks: true
-  }).render();
-});
+        calendarCont.classList.remove('hidden');
+        calendarCont.innerHTML = '';
+        new FullCalendar.Calendar(calendarCont, {
+          initialView: 'dayGridMonth',
+          headerToolbar: { left:  'prev,next today', center:'title', right: 'dayGridMonth,listWeek' },
+          fixedWeekCount: false,
+          showNonCurrentDates: false,
+          events,
+          displayEventTime: false,
+          dayMaxEventRows: true,
+          navLinks: true
+        }).render();
+      });
 
       backBtn.addEventListener('click', ()=>{
         calendarCont.classList.add('hidden');
