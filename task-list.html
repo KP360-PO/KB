@@ -41,7 +41,7 @@
     </select>
     </div>
     <button id="leaveScheduleBtn" type="button">Leave Schedule</button>
-    <button id="backBtn" type="button" class="hidden">Back to Task List</button>
+    <button id="backBtn" type="button" class="hidden">&larr; Back to Task List</button>
   </form>
 
   <div id="overallProgressContainer">
@@ -63,8 +63,6 @@
     const staffOptions = ['Summary of Schedule', ...staffNames];
     const STORAGE_DONE = 'kp360_done_states';
     const STORAGE_RESET = 'kp360_last_reset';
-
-    // Dynamically assign each name a unique HSL color
     const personColors = {};
     staffNames.forEach((name, i) => {
       const hue = Math.round(i * 360 / staffNames.length);
@@ -368,7 +366,7 @@
         calendarCont.innerHTML = '';
         new FullCalendar.Calendar(calendarCont, {
           initialView: 'dayGridMonth',
-          headerToolbar: { left:  'prev,next today', center:'title', right: 'dayGridMonth,listWeek' },
+          headerToolbar: { left:  'prev,next today', center:'title', right: 'dayGridMonth,listMonth' },
           fixedWeekCount: false,
           showNonCurrentDates: false,
           events,
