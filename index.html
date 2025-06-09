@@ -75,7 +75,7 @@
     <a href="#ratings">Tutorials</a>
     <a href="#tasks">Task List</a>
     <a href="#processors" id="processors-link">Processors</a>
-    <a href="#woohub" id="woohub-link">WooHub</a></nav>
+    </nav>
   
   <div class="container">
     <div id="detail-view">
@@ -204,7 +204,7 @@ async function addScreenshotTimestamps() {
   }
 }
 
-  const SHEET_ID      = '1zWuPjF-bTWWRTtbs9BLWJk3w4h7Xrpi5oqyUbi6Oqrg';
+  const SHEET_ID = '1zWuPjF-bTWWRTtbs9BLWJk3w4h7Xrpi5oqyUbi6Oqrg';
 
   async function fetchSheetFromId(sheetId, tab) {
     const url = `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?sheet=${encodeURIComponent(tab)}&tqx=out:json`;
@@ -473,12 +473,6 @@ function setActiveTab(key) {
    e.preventDefault();
    window.open('https://kp360-po.github.io/KPP/PO_Portal.html', '_blank');
    return;
-  }
-
-  if (e.target.id === 'woohub-link') {
-  e.preventDefault();
-  window.open('https://woohub-info.github.io/kb/', '_blank');
-  return;
   }
 
   if (e.target.matches('.ann-link')) {
