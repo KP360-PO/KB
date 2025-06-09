@@ -35,6 +35,7 @@
     .cards-container.marketplace-performance {display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.2rem;}
     .cards-container.marketplace-performance .card {max-width: none; width: auto;}
     .cards-container.marketplace-performance .screenshot {width: 100%; height: auto; object-fit: contain;}
+    .cards-container.marketplace-performance .screenshot-timestamp {font-size: 0.85rem;color: #555;text-align: center;margin-bottom: 0.25rem;}
     .cards-container.top-performers {display: flex;flex-wrap: nowrap;justify-content: center;gap: 2rem;margin-top: 2rem;overflow-x: auto;padding-bottom: 1rem;}
     .cards-container.top-performers .performer {flex: 0 0 auto;text-align: center;}
     .cards-container.top-performers .profile-pic {width: 100px;height: 100px;border-radius: 50%;object-fit: cover;display: block;margin: 0 auto;border: 3px solid var(--accent);}
@@ -174,6 +175,62 @@ const formatTimestamp = d => {
   h = h % 12 || 12;
   const pad = n => String(n).padStart(2,'0');
   return `${pad(d.getMonth()+1)}/${pad(d.getDate())}/${d.getFullYear()} ${pad(h)}:${pad(d.getMinutes())} ${ampm}`; };
+
+async function addScreenshotTimestamps() {
+  const owner = 'KP360-PO';
+  const repo  = 'KB';
+  const imgs  = document.querySelectorAll('.cards-container.marketplace-performance .screenshot');
+
+  for (let img of imgs) {
+    // derive the repo‐relative path from the src URL
+    const m = img.src.match(/\/assets\/screenshots\/(.+)$/);
+    if (!m) continue;
+    const filePath = `assets/screenshots/${m[1]}`;
+
+    const apiUrl = `https://api.github.com/repos/${owner}/${repo}/commits?path=${encodeURIComponent(filePath)}&per_page=1`;
+    try {
+      const res = await fetch(apiUrl);
+      if (!res.ok) throw new Error(res.statusText);
+      const commits = await res.json();
+      if (commits.length) {
+        const date = new Date(commits[0].commit.author.date);
+        const tsDiv = document.createElement('div');
+        tsDiv.className = 'screenshot-timestamp';
+        tsDiv.textContent = 'As of ' + formatTimestamp(date);
+        img.parentNode.insertBefore(tsDiv, img);
+      }
+    } catch (err) {
+      console.error('Could not fetch timestamp for', filePath, err);
+    }
+  }
+}async function addScreenshotTimestamps() {
+  const owner = 'KP360-PO';
+  const repo  = 'KB';
+  const imgs  = document.querySelectorAll('.cards-container.marketplace-performance .screenshot');
+
+  for (let img of imgs) {
+    // derive the repo‐relative path from the src URL
+    const m = img.src.match(/\/assets\/screenshots\/(.+)$/);
+    if (!m) continue;
+    const filePath = `assets/screenshots/${m[1]}`;
+
+    const apiUrl = `https://api.github.com/repos/${owner}/${repo}/commits?path=${encodeURIComponent(filePath)}&per_page=1`;
+    try {
+      const res = await fetch(apiUrl);
+      if (!res.ok) throw new Error(res.statusText);
+      const commits = await res.json();
+      if (commits.length) {
+        const date = new Date(commits[0].commit.author.date);
+        const tsDiv = document.createElement('div');
+        tsDiv.className = 'screenshot-timestamp';
+        tsDiv.textContent = 'As of ' + formatTimestamp(date);
+        img.parentNode.insertBefore(tsDiv, img);
+      }
+    } catch (err) {
+      console.error('Could not fetch timestamp for', filePath, err);
+    }
+  }
+}
 
   const SHEET_ID      = '1zWuPjF-bTWWRTtbs9BLWJk3w4h7Xrpi5oqyUbi6Oqrg';
 
@@ -554,6 +611,7 @@ imgModal.addEventListener('click', e => {
     });
     loadOtherSheets();
     initImageZoom();
+    addScreenshotTimestamps();
   });
 </script>
 </body>
