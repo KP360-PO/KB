@@ -178,32 +178,50 @@ function formatTimestamp(d) {
 }
 
 async function addScreenshotTimestamps() {
-  const owner = 'KP360-PO';
-  const repo  = 'KB';
-  const imgs  = document.querySelectorAll('.cards-container.marketplace-performance .screenshot');
+  const owner       = 'KP360-PO';
+  const repo        = 'KB';
+  const folderPath  = 'assets/screenshots';
+  const contentsUrl = `https://api.github.com/repos/${owner}/${repo}/contents/${folderPath}`;
+  const commitsUrl  = `https://api.github.com/repos/${owner}/${repo}/commits`;
 
-  for (let img of imgs) {
-    const m = img.src.match(/\/assets\/screenshots\/(.+)$/);
-    if (!m) continue;
-    const filePath = `assets/screenshots/${m[1]}`;
-    const apiUrl = `https://api.github.com/repos/${owner}/${repo}/commits?path=${encodeURIComponent(filePath)}&per_page=1`;
-    try {
-      const res = await fetch(apiUrl);
-      if (!res.ok) throw new Error(res.statusText);
-      const commits = await res.json();
-      if (commits.length) {
-        const date = new Date(commits[0].commit.author.date);
-        const tsDiv = document.createElement('div');
-        tsDiv.className = 'screenshot-timestamp';
-        tsDiv.textContent = 'As of ' + formatTimestamp(date);
-        img.parentNode.insertBefore(tsDiv, img);
-      }
-    } catch (err) {
-      console.error('Could not fetch timestamp for', filePath, err);
-    }
+  document.querySelectorAll('.screenshot-timestamp').forEach(el => el.remove());
+
+  let files;
+  try {
+    const listRes = await fetch(contentsUrl);
+    if (!listRes.ok) throw new Error(`Listing failed: ${listRes.status}`);
+    files = await listRes.json();
+  } catch (err) {
+    console.error('Could not list screenshots folder:', err);
+    return;
   }
-}
 
+  await Promise.allSettled(
+    files
+      .filter(item => item.type === 'file')
+      .map(async file => {
+        try {
+          const url = `${commitsUrl}?path=${encodeURIComponent(file.path)}&per_page=1`;
+          const res = await fetch(url);
+          if (!res.ok) throw new Error(`Commit fetch ${res.status}`);
+          const [latest] = await res.json();
+          if (!latest) return;
+
+          const img = document.querySelector(`img.screenshot[src$="${file.name}"]`);
+          if (!img) return;
+
+          const date  = new Date(latest.commit.author.date);
+          const div   = document.createElement('div');
+          div.className      = 'screenshot-timestamp';
+          div.textContent    = 'As of ' + formatTimestamp(date);
+          img.parentNode.insertBefore(div, img);
+        } catch (e) {
+          console.error(`Timestamp error for ${file.name}:`, e);
+        }
+      })
+  );
+}
+  
   const SHEET_ID = '1zWuPjF-bTWWRTtbs9BLWJk3w4h7Xrpi5oqyUbi6Oqrg';
 
   async function fetchSheetFromId(sheetId, tab) {
@@ -569,9 +587,10 @@ imgModal.addEventListener('click', e => {
     loadAnnouncements().then(() => {
       setTimeout(() => {showLatestAnnouncementModal();}, 500);
     });
-    loadOtherSheets();
     initImageZoom();
     addScreenshotTimestamps();
+    loadOtherSheets();
+  
   });
 </script>
 </body>
