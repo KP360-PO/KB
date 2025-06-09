@@ -35,7 +35,7 @@
     .cards-container.marketplace-performance {display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.2rem;}
     .cards-container.marketplace-performance .card {max-width: none; width: auto;}
     .cards-container.marketplace-performance .screenshot {width: 100%; height: auto; object-fit: contain;}
-    .cards-container.marketplace-performance .screenshot-timestamp {font-size: 0.85rem;color: #555;text-align: center;margin-bottom: 0.25rem;}
+    .cards-container.marketplace-performance .screenshot-label {font-size: 0.85rem;color: #555;text-align: center;margin-bottom: 0.25rem;}
     .cards-container.top-performers {display: flex;flex-wrap: nowrap;justify-content: center;gap: 2rem;margin-top: 2rem;overflow-x: auto;padding-bottom: 1rem;}
     .cards-container.top-performers .performer {flex: 0 0 auto;text-align: center;}
     .cards-container.top-performers .profile-pic {width: 100px;height: 100px;border-radius: 50%;object-fit: cover;display: block;margin: 0 auto;border: 3px solid var(--accent);}
@@ -92,14 +92,17 @@
   <div class="cards-container marketplace-performance">
     <div class="card">
       <div class="badge">Walmart</div>
+      <div class="screenshot-label">Last updated 05/29/2025 7:19 AM</div>
       <img src="assets/screenshots/walmart-performance.png"alt="Walmart Performance"class="screenshot"/>
     </div>
     <div class="card">
       <div class="badge">eBay</div>
+      <div class="screenshot-label">Last updated 05/29/2025 7:19 AM</div>
       <img src="assets/screenshots/ebay-performance.png"alt="eBay Performance"class="screenshot"/>
     </div>
     <div class="card">
       <div class="badge">Amazon</div>
+      <div class="screenshot-label">Last updated 05/29/2025 7:19 AM</div>
       <img src="assets/screenshots/amazon-performance.png"alt="Amazon Performance"class="screenshot"/>
     </div>
 </div>
@@ -175,51 +178,6 @@ function formatTimestamp(d) {
   h = h % 12 || 12;
   const pad = n => String(n).padStart(2,'0');
   return `${pad(d.getMonth()+1)}/${pad(d.getDate())}/${d.getFullYear()} ${pad(h)}:${pad(d.getMinutes())} ${ampm}`;
-}
-
-async function addScreenshotTimestamps() {
-  const owner       = 'KP360-PO';
-  const repo        = 'KB';
-  const folderPath  = 'assets/screenshots';
-  const contentsUrl = `https://api.github.com/repos/${owner}/${repo}/contents/${folderPath}`;
-  const commitsUrl  = `https://api.github.com/repos/${owner}/${repo}/commits`;
-
-  document.querySelectorAll('.screenshot-timestamp').forEach(el => el.remove());
-
-  let files;
-  try {
-    const listRes = await fetch(contentsUrl);
-    if (!listRes.ok) throw new Error(`Listing failed: ${listRes.status}`);
-    files = await listRes.json();
-  } catch (err) {
-    console.error('Could not list screenshots folder:', err);
-    return;
-  }
-
-  await Promise.allSettled(
-    files
-      .filter(item => item.type === 'file')
-      .map(async file => {
-        try {
-          const url = `${commitsUrl}?path=${encodeURIComponent(file.path)}&per_page=1`;
-          const res = await fetch(url);
-          if (!res.ok) throw new Error(`Commit fetch ${res.status}`);
-          const [latest] = await res.json();
-          if (!latest) return;
-
-          const img = document.querySelector(`img.screenshot[src$="${file.name}"]`);
-          if (!img) return;
-
-          const date  = new Date(latest.commit.author.date);
-          const div   = document.createElement('div');
-          div.className      = 'screenshot-timestamp';
-          div.textContent    = 'As of ' + formatTimestamp(date);
-          img.parentNode.insertBefore(div, img);
-        } catch (e) {
-          console.error(`Timestamp error for ${file.name}:`, e);
-        }
-      })
-  );
 }
   
   const SHEET_ID = '1zWuPjF-bTWWRTtbs9BLWJk3w4h7Xrpi5oqyUbi6Oqrg';
@@ -440,7 +398,6 @@ async function loadOtherSheets() {
       res.innerHTML = '';
 
       initImageZoom();
-      addScreenshotTimestamps();
     };
   });
 }
