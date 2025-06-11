@@ -424,12 +424,32 @@ function setActiveTab(key) {
             <button id="closeModal"style="position:absolute;top:.5rem;right:.5rem;background:none;border:none;font-size:1.25rem;cursor:pointer">✕</button>
             <div style="margin-top:.5rem;max-height:60vh;overflow:auto;white-space:pre-wrap;line-height:1.4;color:var(--text)">${content}</div></div></div>`;
       document.body.append(modal);
-      modal.querySelector('#copyEmailContent').onclick = ()=>{
-        navigator.clipboard.writeText(content).then(()=>{
-          const btn = modal.querySelector('#copyEmailContent');
-          btn.textContent = 'Copied!'; setTimeout(()=>btn.textContent='Copy',1500);
-        });
-      };
+          modal.querySelector('#copyEmailContent').onclick = () => {
+        const temp = document.createElement('div');
+          temp.innerHTML = content;
+
+        const segments = [];
+          temp.childNodes.forEach(node => {
+          if (node.nodeType === Node.ELEMENT_NODE) {
+            const tag = node.tagName;
+            const txt = node.textContent.trim();
+          if (!txt) return;
+          if (tag === 'P') {segments.push(txt, '');}
+          else if (tag === 'LI') {segments.push('  ' + txt);
+      }
+    }
+  });
+
+  const plainText = segments.join('\n').trim();
+  navigator.clipboard.writeText(plainText)
+    .then(() => {
+      const btn = modal.querySelector('#copyEmailContent');
+      btn.textContent = 'Copied!';
+      setTimeout(() => btn.textContent = 'Copy', 600);
+    })
+    .catch(err => console.error('Copy failed', err));
+};
+      
       modal.querySelector('#closeModal').onclick = ()=>modal.remove();
       return;
     }
